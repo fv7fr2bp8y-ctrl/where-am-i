@@ -416,7 +416,7 @@ export default function Home() {
               ].map(({ Icon, label }) => (
                 <div key={label} className="tile flex flex-col items-center gap-3 px-2 py-7">
                   <Icon className="h-14 w-14" style={{ color: "var(--blue)" }} />
-                  <span className="text-xs font-semibold" style={{ color: "var(--slate)" }}>{label}</span>
+                  <span className="text-sm font-semibold" style={{ color: "var(--slate)" }}>{label}</span>
                 </div>
               ))}
             </div>
