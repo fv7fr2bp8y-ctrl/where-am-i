@@ -4,41 +4,28 @@ import { connection } from "next/server";
 import { readFileSync } from "fs";
 import { join } from "path";
 
-// Чете API ключа директно от .env.local, заобикаляйки системната среда
-// (Нужно когато parent процесът е задал ANTHROPIC_API_KEY="" празен)
-function readApiKeyFromEnvFile(): string {
+// Заобикаля празния ANTHROPIC_API_KEY от Claude Code среда
+function getApiKey(): string {
+  const fromProcess = process.env.ANTHROPIC_API_KEY;
+  if (fromProcess && fromProcess.length > 10) return fromProcess;
   try {
     const content = readFileSync(join(process.cwd(), ".env.local"), "utf8");
     const match = content.match(/^ANTHROPIC_API_KEY=(.+)$/m);
     if (match) return match[1].trim();
-  } catch {/* файлът не съществува */}
+  } catch { /* ignore */ }
   return "";
-}
-
-function getApiKey(): string {
-  const fromProcess = process.env.ANTHROPIC_API_KEY;
-  if (fromProcess && fromProcess.length > 10) return fromProcess;
-  return readApiKeyFromEnvFile();
 }
 
 interface GeocodeResult {
   display_name: string;
   address: {
-    road?: string;
-    house_number?: string;
-    suburb?: string;
-    city?: string;
-    town?: string;
-    village?: string;
-    county?: string;
-    country?: string;
+    road?: string; house_number?: string; suburb?: string;
+    city?: string; town?: string; village?: string;
+    county?: string; country?: string;
   };
 }
 
-async function reverseGeocode(
-  lat: number,
-  lon: number
-): Promise<{ full: string; short: string }> {
+async function reverseGeocode(lat: number, lon: number): Promise<{ full: string; short: string }> {
   const res = await fetch(
     `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=bg`,
     { headers: { "User-Agent": "WhereAmI/1.0" } }
@@ -51,83 +38,74 @@ async function reverseGeocode(
     a.city ?? a.town ?? a.village ?? a.county,
     a.country,
   ].filter(Boolean);
-  const short = parts.join(", ") || data.display_name;
-  return { full: data.display_name ?? `${lat}, ${lon}`, short };
+  return { full: data.display_name ?? `${lat}, ${lon}`, short: parts.join(", ") || data.display_name };
 }
 
+const LANG_PROMPTS: Record<string, { name: string; prompt: string }> = {
+  bg: { name: "български", prompt: "Пиши на български. Бъди топъл и ангажиращ, сякаш си местен водач." },
+  en: { name: "English",   prompt: "Write in English. Be warm and engaging, like a local guide." },
+  de: { name: "Deutsch",   prompt: "Schreibe auf Deutsch. Sei warm und informativ, wie ein lokaler Reiseführer." },
+  fr: { name: "français",  prompt: "Écris en français. Sois chaleureux et informatif, comme un guide local." },
+  es: { name: "español",   prompt: "Escribe en español. Sé cálido e informativo, como un guía local." },
+};
+
 export async function POST(req: NextRequest) {
-  // Next.js 16: connection() гарантира четене на env vars по runtime
   await connection();
+  const { lat, lon, lang = "bg" } = await req.json();
 
-  const { lat, lon } = await req.json();
-
-  if (typeof lat !== "number" || typeof lon !== "number") {
+  if (typeof lat !== "number" || typeof lon !== "number")
     return NextResponse.json({ error: "Invalid coordinates" }, { status: 400 });
-  }
 
   const apiKey = getApiKey();
-  if (!apiKey) {
+  if (!apiKey)
     return NextResponse.json({ error: "Missing ANTHROPIC_API_KEY" }, { status: 500 });
-  }
-  const client = new Anthropic({ apiKey });
 
+  const client = new Anthropic({ apiKey });
   const { full: place, short: shortAddress } = await reverseGeocode(lat, lon);
+  const lp = LANG_PROMPTS[lang] ?? LANG_PROMPTS.bg;
 
   const stream = await client.messages.stream({
     model: "claude-sonnet-4-6",
     max_tokens: 1024,
-    messages: [
-      {
-        role: "user",
-        content: `Намирам се на следното място: ${place} (координати: ${lat.toFixed(5)}, ${lon.toFixed(5)}).
+    messages: [{
+      role: "user",
+      content: `I am at: ${place} (${lat.toFixed(5)}, ${lon.toFixed(5)}).
 
-Разкажи ми за това място на български език в следния формат:
+${lp.prompt}
 
-## 📍 Къде си
+Use this exact format:
 
-Кратко описание на точното местоположение (1-2 изречения).
+## 📍 Where I am
 
-## 🏛️ История
+Short description of the exact location (1-2 sentences).
 
-Интересна история за района или близкото населено място (3-4 изречения).
+## 🏛️ History
 
-## ✨ Интересни факти
+Interesting history of the area (3-4 sentences).
 
-3 интересни факта за района, всеки на нов ред с тире (-).
+## ✨ Fun facts
 
-## 🍽️ Места за хранене наблизо
+3 interesting facts, each on a new line starting with "-".
 
-Препоръчай 3-4 типа заведения или конкретни места (ако знаеш), подходящи за района. Ако не знаеш конкретни заведения, препоръчай типичната местна кухня и какво да търси човекът.
+## 🍽️ Where to eat
 
-Бъди топъл, ангажиращ и информативен. Пиши сякаш си местен водач.`,
-      },
-    ],
+Recommend 3-4 types of restaurants or specific places suitable for this area.`,
+    }],
   });
 
   const encoder = new TextEncoder();
-
   const readable = new ReadableStream({
     async start(controller) {
-      // First chunk: address as JSON header line
-      controller.enqueue(
-        encoder.encode(`\x00${JSON.stringify({ address: shortAddress })}\n`)
-      );
+      controller.enqueue(encoder.encode(`\x00${JSON.stringify({ address: shortAddress })}\n`));
       for await (const chunk of stream) {
-        if (
-          chunk.type === "content_block_delta" &&
-          chunk.delta.type === "text_delta"
-        ) {
+        if (chunk.type === "content_block_delta" && chunk.delta.type === "text_delta")
           controller.enqueue(encoder.encode(chunk.delta.text));
-        }
       }
       controller.close();
     },
   });
 
   return new NextResponse(readable, {
-    headers: {
-      "Content-Type": "text/plain; charset=utf-8",
-      "Transfer-Encoding": "chunked",
-    },
+    headers: { "Content-Type": "text/plain; charset=utf-8", "Transfer-Encoding": "chunked" },
   });
 }
