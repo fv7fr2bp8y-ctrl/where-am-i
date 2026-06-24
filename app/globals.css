@@ -1,18 +1,18 @@
 @import "tailwindcss";
 
-/* ── Warm premium "traveler" palette ─────────────────────────────────────── */
+/* ── Tourista-style blue travel palette ──────────────────────────────────── */
 :root {
-  --cream:      #faf5ec;
-  --cream-2:    #f3e9d8;
-  --card:       #fffcf6;
-  --terracotta: #c2603c;
-  --terracotta-d: #a84a2b;
-  --amber:      #d99a4e;
-  --espresso:   #2c2317;
-  --ink:        #4a3d2c;
-  --muted:      #8a7a64;
-  --border:     #e8dcc7;
-  --font-display: var(--font-playfair), Georgia, serif;
+  --bg:        #eef3fb;
+  --bg-2:      #e4ecf8;
+  --card:      #ffffff;
+  --blue:      #2f6bff;
+  --blue-d:    #1f54d6;
+  --blue-soft: #eaf1ff;
+  --ink:       #16203a;
+  --slate:     #44506a;
+  --muted:     #8893a7;
+  --line:      #e7edf6;
+  --star:      #f6a609;
   --font-body: var(--font-inter), system-ui, sans-serif;
 }
 
@@ -21,78 +21,108 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-html, body { background: var(--cream); color: var(--espresso); }
+html, body { background: var(--bg); color: var(--ink); }
 
-.font-display { font-family: var(--font-display); }
-
-/* ── App background: warm layered gradient + paper grain ──────────────────── */
+/* ── App background ──────────────────────────────────────────────────────── */
 .bg-app {
   position: relative;
   min-height: 100dvh;
   background:
-    radial-gradient(circle at 15% 0%, rgba(217,154,78,0.18) 0%, transparent 45%),
-    radial-gradient(circle at 90% 10%, rgba(194,96,60,0.14) 0%, transparent 40%),
-    linear-gradient(180deg, var(--cream) 0%, var(--cream-2) 100%);
+    radial-gradient(circle at 100% 0%, rgba(47,107,255,0.10) 0%, transparent 38%),
+    linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
   background-attachment: fixed;
 }
 
 /* ── Cards ───────────────────────────────────────────────────────────────── */
 .card {
   background: var(--card);
-  border: 1px solid var(--border);
   border-radius: 1.5rem;
-  box-shadow:
-    0 1px 2px rgba(44,35,23,0.04),
-    0 12px 30px -12px rgba(44,35,23,0.16);
+  box-shadow: 0 10px 30px -14px rgba(22,32,58,0.18), 0 2px 6px -2px rgba(22,32,58,0.06);
+}
+.card-flat {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 1.25rem;
 }
 
 /* ── Buttons ─────────────────────────────────────────────────────────────── */
 .btn-primary {
-  background: linear-gradient(135deg, var(--terracotta) 0%, var(--terracotta-d) 100%);
+  background: linear-gradient(135deg, var(--blue) 0%, var(--blue-d) 100%);
   color: #fff;
   border-radius: 1rem;
-  box-shadow: 0 10px 24px -8px rgba(168,74,43,0.6);
-  transition: transform .15s ease, box-shadow .15s ease, filter .15s ease;
+  box-shadow: 0 12px 26px -10px rgba(47,107,255,0.65);
+  transition: transform .15s ease, filter .15s ease;
 }
-.btn-primary:hover { filter: brightness(1.06); }
+.btn-primary:hover { filter: brightness(1.05); }
 .btn-primary:active { transform: scale(0.97); }
 
 .btn-soft {
-  background: rgba(255,255,255,0.7);
-  border: 1px solid var(--border);
-  color: var(--ink);
+  background: var(--blue-soft);
+  color: var(--blue-d);
+  border-radius: 1rem;
+  font-weight: 600;
+  transition: all .15s ease;
+}
+.btn-soft:hover { background: #dfe9ff; }
+.btn-soft:active { transform: scale(0.97); }
+
+.btn-ghost {
+  background: #fff;
+  border: 1px solid var(--line);
+  color: var(--slate);
   border-radius: 1rem;
   transition: all .15s ease;
 }
-.btn-soft:hover { background: #fff; border-color: var(--terracotta); color: var(--terracotta-d); }
-.btn-soft:active { transform: scale(0.97); }
+.btn-ghost:hover { border-color: var(--blue); color: var(--blue-d); }
+.btn-ghost:active { transform: scale(0.97); }
 
 /* ── Chips (language) ────────────────────────────────────────────────────── */
 .chip {
-  border: 1px solid var(--border);
-  background: rgba(255,255,255,0.6);
+  border: 1px solid var(--line);
+  background: #fff;
   color: var(--muted);
   border-radius: 999px;
   transition: all .15s ease;
 }
 .chip:active { transform: scale(0.94); }
 .chip-active {
-  background: linear-gradient(135deg, var(--terracotta) 0%, var(--terracotta-d) 100%);
+  background: var(--blue);
   color: #fff;
   border-color: transparent;
-  box-shadow: 0 6px 16px -6px rgba(168,74,43,0.7);
+  box-shadow: 0 8px 18px -8px rgba(47,107,255,0.7);
 }
 
-/* ── Section heading inside the guide ────────────────────────────────────── */
-.guide-h {
-  font-family: var(--font-display);
-  color: var(--terracotta-d);
-  font-weight: 700;
+/* ── Category tile ───────────────────────────────────────────────────────── */
+.tile {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 1.25rem;
+  transition: all .15s ease;
 }
+.tile:active { transform: scale(0.96); }
+
+.tile-icon {
+  width: 48px; height: 48px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 0.9rem;
+  background: var(--blue-soft);
+  font-size: 1.4rem;
+}
+
+/* ── Stat chip ───────────────────────────────────────────────────────────── */
+.stat {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 0.75rem 0.5rem;
+}
+.stat + .stat { border-left: 1px solid var(--line); }
+
+/* ── Section heading inside guide ────────────────────────────────────────── */
+.guide-h { color: var(--ink); font-weight: 700; }
 
 /* ── Animations ──────────────────────────────────────────────────────────── */
 @keyframes ping-slow {
-  0%   { transform: scale(1);   opacity: .55; }
+  0%   { transform: scale(1);   opacity: .5; }
   70%  { transform: scale(1.5); opacity: 0; }
   100% { transform: scale(1.5); opacity: 0; }
 }
@@ -100,7 +130,7 @@ html, body { background: var(--cream); color: var(--espresso); }
 
 @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
 .shimmer {
-  background: linear-gradient(90deg, transparent 20%, rgba(194,96,60,0.25) 50%, transparent 80%);
+  background: linear-gradient(90deg, transparent 20%, rgba(47,107,255,0.22) 50%, transparent 80%);
   background-size: 200% 100%;
   animation: shimmer 1.4s infinite;
 }
@@ -108,38 +138,33 @@ html, body { background: var(--cream); color: var(--espresso); }
 @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
 .fade-in { animation: fadeUp .45s cubic-bezier(0.22,1,0.36,1) both; }
 
-@keyframes floaty { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+@keyframes floaty { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
 .floaty { animation: floaty 3s ease-in-out infinite; }
 
-/* skeleton block */
 .skeleton {
-  background: linear-gradient(90deg, rgba(232,220,199,0.5) 25%, rgba(232,220,199,0.9) 37%, rgba(232,220,199,0.5) 63%);
+  background: linear-gradient(90deg, rgba(231,237,246,0.6) 25%, rgba(231,237,246,1) 37%, rgba(231,237,246,0.6) 63%);
   background-size: 400% 100%;
   animation: shimmer 1.4s ease infinite;
   border-radius: 0.75rem;
 }
 
-/* ── Leaflet tweaks ──────────────────────────────────────────────────────── */
-.leaflet-container { border-radius: 1.5rem; font-family: var(--font-body); }
-.leaflet-popup-content-wrapper {
-  border-radius: 0.9rem;
-  box-shadow: 0 12px 30px -12px rgba(44,35,23,0.4);
-}
-.leaflet-popup-content { font-size: 0.8rem; color: var(--espresso); }
-.leaflet-control-attribution { font-size: 9px; opacity: 0.6; }
+/* ── Leaflet ─────────────────────────────────────────────────────────────── */
+.leaflet-container { border-radius: 1.25rem; font-family: var(--font-body); }
+.leaflet-popup-content-wrapper { border-radius: 0.9rem; }
+.leaflet-popup-content { font-size: 0.8rem; color: var(--ink); }
+.leaflet-control-attribution { font-size: 9px; opacity: 0.55; }
 
-/* custom pin */
 .pin-dot {
   width: 22px; height: 22px;
-  background: var(--terracotta);
+  background: var(--blue);
   border: 3px solid #fff;
   border-radius: 50% 50% 50% 0;
   transform: rotate(-45deg);
-  box-shadow: 0 4px 10px rgba(168,74,43,0.5);
+  box-shadow: 0 4px 10px rgba(47,107,255,0.5);
 }
 .pin-pulse {
   width: 22px; height: 22px;
   border-radius: 50%;
-  background: rgba(194,96,60,0.5);
+  background: rgba(47,107,255,0.45);
   animation: ping-slow 2s ease-out infinite;
 }
