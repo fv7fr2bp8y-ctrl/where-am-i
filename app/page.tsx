@@ -410,7 +410,7 @@ export default function Home() {
                 { Icon: LandmarkIcon, label: "История" },
                 { Icon: FoodIcon, label: "Хранене" },
                 { Icon: SparkleIcon, label: "Факти" },
-                { Icon: ClockIcon, label: "През вековете" },
+                { Icon: ClockIcon, label: "Епохи" },
                 { Icon: CameraIcon, label: "Снимка" },
                 { Icon: SpeakerIcon, label: "Глас" },
               ].map(({ Icon, label }) => (
