@@ -390,7 +390,7 @@ export default function Home() {
                      style={{ background: "rgba(255,255,255,0.18)" }}>
                   <PinIcon className="h-8 w-8 text-white" />
                 </div>
-                <h2 className="text-xl font-bold text-white">Открий своето място</h2>
+                <h2 className="text-xl font-bold text-white">Какво се крие около теб?</h2>
                 <p className="mx-auto mt-1 max-w-xs text-sm text-white/80">
                   История, интересни факти и къде да хапнеш — само с едно докосване.
                 </p>
@@ -414,10 +414,8 @@ export default function Home() {
                 { Icon: CameraIcon, label: "Снимка" },
                 { Icon: SpeakerIcon, label: "Глас" },
               ].map(({ Icon, label }) => (
-                <div key={label} className="tile flex flex-col items-center gap-2.5 px-2 py-5">
-                  <span className="tile-icon" style={{ color: "var(--blue)" }}>
-                    <Icon className="h-7 w-7" />
-                  </span>
+                <div key={label} className="tile flex flex-col items-center gap-3 px-2 py-6">
+                  <Icon className="h-10 w-10" style={{ color: "var(--blue)" }} />
                   <span className="text-xs font-semibold" style={{ color: "var(--slate)" }}>{label}</span>
                 </div>
               ))}
