@@ -25,9 +25,9 @@ interface GeocodeResult {
   };
 }
 
-async function reverseGeocode(lat: number, lon: number): Promise<{ full: string; short: string }> {
+async function reverseGeocode(lat: number, lon: number, lang: string): Promise<{ full: string; short: string }> {
   const res = await fetch(
-    `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=bg`,
+    `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=${lang}`,
     { headers: { "User-Agent": "WhereAmI/1.0" } }
   );
   const data: GeocodeResult = await res.json();
@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Missing ANTHROPIC_API_KEY" }, { status: 500 });
 
   const client = new Anthropic({ apiKey });
-  const { full: place, short: shortAddress } = await reverseGeocode(lat, lon);
+  const { full: place, short: shortAddress } = await reverseGeocode(lat, lon, lang);
   const lp = LANG_PROMPTS[lang] ?? LANG_PROMPTS.bg;
 
   const stream = await client.messages.stream({

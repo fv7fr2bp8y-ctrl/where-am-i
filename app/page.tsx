@@ -8,6 +8,7 @@ import {
   CameraIcon, SpeakerIcon, GlobeIcon, CompassIcon, RefreshIcon,
   WarningIcon, ChevronIcon, CheckIcon,
 } from "./components/Icons";
+import { UI, type LangCode } from "./i18n";
 
 const Map = dynamic(() => import("./components/Map"), { ssr: false });
 
@@ -136,6 +137,8 @@ export default function Home() {
   const abortRef = useRef<AbortController | null>(null);
   const photoRef = useRef<HTMLInputElement>(null);
 
+  const t = UI[lang.code as LangCode];
+
   // Load history from localStorage
   useEffect(() => {
     try {
@@ -225,7 +228,7 @@ export default function Home() {
       if (parsedAddress) saveVisit(parsedAddress, lat, lon);
     } catch (e: unknown) {
       if (e instanceof Error && e.name === "AbortError") return;
-      setError("Нещо се обърка. Провери ANTHROPIC_API_KEY.");
+      setError(t.errGeneric);
       setStatus("error");
     }
   }
@@ -246,7 +249,7 @@ export default function Home() {
         streamGuide(lat, lon, lang, true);
       },
       () => {
-        setError("Не можах да открия местоположението. Разреши GPS достъп.");
+        setError(t.errGeo);
         setStatus("error");
       },
       { enableHighAccuracy: true, timeout: 10000 }
@@ -331,7 +334,7 @@ export default function Home() {
         {/* ── Header ── */}
         <header className="flex items-center justify-between fade-in">
           <div>
-            <p className="text-sm font-medium" style={{ color: "var(--muted)" }}>Накъде днес?</p>
+            <p className="text-sm font-medium" style={{ color: "var(--muted)" }}>{t.subtitle}</p>
             <h1 className="text-2xl font-extrabold tracking-tight" style={{ color: "var(--ink)" }}>
               Where am I?
             </h1>
@@ -390,16 +393,16 @@ export default function Home() {
                      style={{ background: "rgba(255,255,255,0.18)" }}>
                   <PinIcon className="h-8 w-8 text-white" />
                 </div>
-                <h2 className="text-xl font-bold text-white">Какво се крие около теб?</h2>
+                <h2 className="text-xl font-bold text-white">{t.heroTitle}</h2>
                 <p className="mx-auto mt-1 max-w-xs text-sm text-white/80">
-                  История, интересни факти и къде да хапнеш — само с едно докосване.
+                  {t.heroSub}
                 </p>
                 <button
                   onClick={explore}
                   className="mt-5 w-full rounded-2xl bg-white px-6 py-3.5 text-base font-bold transition-transform active:scale-[0.98]"
                   style={{ color: "var(--blue-d)" }}
                 >
-                  Открий къде съм
+                  {t.cta}
                 </button>
               </div>
             </div>
@@ -407,12 +410,12 @@ export default function Home() {
             {/* Category tiles */}
             <div className="mt-5 grid grid-cols-3 gap-3">
               {[
-                { Icon: LandmarkIcon, label: "История" },
-                { Icon: FoodIcon, label: "Хранене" },
-                { Icon: SparkleIcon, label: "Факти" },
-                { Icon: ClockIcon, label: "Епохи" },
-                { Icon: CameraIcon, label: "Снимка" },
-                { Icon: SpeakerIcon, label: "Глас" },
+                { Icon: LandmarkIcon, label: t.catHistory },
+                { Icon: FoodIcon, label: t.catFood },
+                { Icon: SparkleIcon, label: t.catFacts },
+                { Icon: ClockIcon, label: t.catEras },
+                { Icon: CameraIcon, label: t.catPhoto },
+                { Icon: SpeakerIcon, label: t.catVoice },
               ].map(({ Icon, label }) => (
                 <div key={label} className="tile flex flex-col items-center gap-3 px-2 py-7">
                   <Icon className="h-14 w-14" style={{ color: "var(--blue)" }} />
@@ -428,7 +431,7 @@ export default function Home() {
                 className="mt-6 block w-full text-center text-sm font-semibold"
                 style={{ color: "var(--blue-d)" }}
               >
-                {showHistory ? "▲ Скрий историята" : `▼ ${history.length} предишни посещения`}
+                {showHistory ? `▲ ${t.hideHistory}` : `▼ ${t.prevVisits(history.length)}`}
               </button>
             )}
 
@@ -437,9 +440,9 @@ export default function Home() {
               <div className="card mt-4 p-5 fade-in">
                 <div className="mb-3 flex items-center justify-between">
                   <h3 className="flex items-center gap-2 text-base font-bold" style={{ color: "var(--ink)" }}>
-                    <GlobeIcon className="h-5 w-5" style={{ color: "var(--blue)" }} /> Дневник
+                    <GlobeIcon className="h-5 w-5" style={{ color: "var(--blue)" }} /> {t.diary}
                   </h3>
-                  <button onClick={clearHistory} className="text-xs font-semibold" style={{ color: "var(--blue-d)" }}>изчисти</button>
+                  <button onClick={clearHistory} className="text-xs font-semibold" style={{ color: "var(--blue-d)" }}>{t.clear}</button>
                 </div>
                 <div className="space-y-0.5">
                   {history.map((v) => (
@@ -467,7 +470,7 @@ export default function Home() {
                 <CompassIcon className="h-8 w-8" />
               </span>
             </div>
-            <p className="text-[15px] font-medium" style={{ color: "var(--slate)" }}>Засичам къде си…</p>
+            <p className="text-[15px] font-medium" style={{ color: "var(--slate)" }}>{t.locating}</p>
           </div>
         )}
 
@@ -506,17 +509,17 @@ export default function Home() {
                 <div className="stat">
                   <GlobeIcon className="h-5 w-5" style={{ color: "var(--blue)" }} />
                   <span className="text-sm font-bold" style={{ color: "var(--ink)" }}>{coords.lat.toFixed(4)}</span>
-                  <span className="text-[11px]" style={{ color: "var(--muted)" }}>Ширина</span>
+                  <span className="text-[11px]" style={{ color: "var(--muted)" }}>{t.statLat}</span>
                 </div>
                 <div className="stat">
                   <CompassIcon className="h-5 w-5" style={{ color: "var(--blue)" }} />
                   <span className="text-sm font-bold" style={{ color: "var(--ink)" }}>{coords.lon.toFixed(4)}</span>
-                  <span className="text-[11px]" style={{ color: "var(--muted)" }}>Дължина</span>
+                  <span className="text-[11px]" style={{ color: "var(--muted)" }}>{t.statLon}</span>
                 </div>
                 <div className="stat">
                   <span className="text-base leading-none">{lang.flag}</span>
                   <span className="text-sm font-bold" style={{ color: "var(--ink)" }}>{lang.label}</span>
-                  <span className="text-[11px]" style={{ color: "var(--muted)" }}>Език</span>
+                  <span className="text-[11px]" style={{ color: "var(--muted)" }}>{t.statLang}</span>
                 </div>
               </div>
             </div>
@@ -541,14 +544,14 @@ export default function Home() {
             {status === "done" && (
               <div className="grid grid-cols-2 gap-2.5 fade-in">
                 <button onClick={() => photoRef.current?.click()} className="btn-soft flex items-center justify-center gap-2 px-4 py-3.5 text-sm">
-                  <CameraIcon className="h-5 w-5" /> Снимай мястото
+                  <CameraIcon className="h-5 w-5" /> {t.photoBtn}
                 </button>
                 <input ref={photoRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handlePhoto} />
                 <button onClick={loadTimeline} disabled={timelineLoading} className="btn-soft flex items-center justify-center gap-2 px-4 py-3.5 text-sm disabled:opacity-50">
-                  <ClockIcon className="h-5 w-5" /> През историята
+                  <ClockIcon className="h-5 w-5" /> {t.erasBtn}
                 </button>
                 <button onClick={reset} className="btn-primary col-span-2 flex items-center justify-center gap-2 px-4 py-3.5 text-sm font-semibold">
-                  <RefreshIcon className="h-5 w-5" /> Открий ново място
+                  <RefreshIcon className="h-5 w-5" /> {t.newPlace}
                 </button>
               </div>
             )}
@@ -561,7 +564,7 @@ export default function Home() {
                   <ClockIcon className="h-6 w-6" />
                 </div>
                 <p className="text-sm" style={{ color: "var(--slate)" }}>
-                  Claude избира епохи и рисува как е изглеждало мястото…
+                  {t.timelineLoading}
                 </p>
                 <div className="mt-4 grid grid-cols-3 gap-2">
                   <div className="skeleton aspect-square" />
@@ -575,7 +578,7 @@ export default function Home() {
             {timeline.length > 0 && !timelineLoading && (
               <div className="space-y-4 fade-in">
                 <h3 className="flex items-center justify-center gap-2 text-center text-lg font-bold" style={{ color: "var(--ink)" }}>
-                  <ClockIcon className="h-5 w-5" style={{ color: "var(--blue)" }} /> Мястото през историята
+                  <ClockIcon className="h-5 w-5" style={{ color: "var(--blue)" }} /> {t.timelineTitle}
                 </h3>
                 {timeline.map((era, i) => (
                   <div key={i} className="card overflow-hidden">
@@ -588,7 +591,7 @@ export default function Home() {
                       />
                     ) : (
                       <div className="flex aspect-square w-full items-center justify-center text-sm" style={{ color: "var(--muted)", background: "var(--bg-2)" }}>
-                        Изображението не успя да се генерира
+                        {t.imgFailed}
                       </div>
                     )}
                     <div className="p-5">
@@ -600,7 +603,7 @@ export default function Home() {
                   </div>
                 ))}
                 <p className="text-center text-xs" style={{ color: "var(--muted)" }}>
-                  ⚠️ AI художествени възстановки, не реални снимки
+                  {t.timelineDisclaimer}
                 </p>
               </div>
             )}
@@ -612,13 +615,13 @@ export default function Home() {
                      style={{ background: "var(--blue-soft)", color: "var(--blue)" }}>
                   <CameraIcon className="h-6 w-6" />
                 </div>
-                <p className="text-sm" style={{ color: "var(--slate)" }}>Claude разглежда снимката…</p>
+                <p className="text-sm" style={{ color: "var(--slate)" }}>{t.photoLoading}</p>
               </div>
             )}
             {photoDesc && !photoLoading && (
               <div className="card p-5 fade-in">
                 <h3 className="mb-2 flex items-center gap-2 text-base font-bold" style={{ color: "var(--blue-d)" }}>
-                  <CameraIcon className="h-5 w-5" /> Claude вижда
+                  <CameraIcon className="h-5 w-5" /> {t.photoTitle}
                 </h3>
                 <p className="text-sm leading-relaxed" style={{ color: "var(--slate)" }}>{photoDesc}</p>
               </div>
@@ -637,7 +640,7 @@ export default function Home() {
               <p className="text-sm" style={{ color: "var(--slate)" }}>{error}</p>
             </div>
             <button onClick={reset} className="btn-soft px-7 py-3 text-sm">
-              Опитай отново
+              {t.retry}
             </button>
           </div>
         )}
@@ -645,7 +648,7 @@ export default function Home() {
         {/* footer */}
         {!busy && (
           <p className="mt-12 text-center text-xs" style={{ color: "var(--muted)" }}>
-            Създадено с Claude · карти от OpenStreetMap
+            {t.footer}
           </p>
         )}
       </div>
