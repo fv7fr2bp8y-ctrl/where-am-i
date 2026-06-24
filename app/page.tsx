@@ -6,7 +6,7 @@ import Splash from "./components/Splash";
 import {
   PinIcon, LandmarkIcon, FoodIcon, SparkleIcon, ClockIcon,
   CameraIcon, SpeakerIcon, GlobeIcon, CompassIcon, RefreshIcon,
-  WarningIcon,
+  WarningIcon, ChevronIcon, CheckIcon,
 } from "./components/Icons";
 
 const Map = dynamic(() => import("./components/Map"), { ssr: false });
@@ -26,6 +26,7 @@ interface Lang {
   code: string;
   flag: string;
   label: string;
+  name: string;
   tts: string;
 }
 
@@ -36,11 +37,11 @@ interface TimelineEra {
 }
 
 const LANGS: Lang[] = [
-  { code: "bg", flag: "🇧🇬", label: "БГ", tts: "bg-BG" },
-  { code: "en", flag: "🇬🇧", label: "EN", tts: "en-GB" },
-  { code: "de", flag: "🇩🇪", label: "DE", tts: "de-DE" },
-  { code: "fr", flag: "🇫🇷", label: "FR", tts: "fr-FR" },
-  { code: "es", flag: "🇪🇸", label: "ES", tts: "es-ES" },
+  { code: "bg", flag: "🇧🇬", label: "БГ", name: "Български", tts: "bg-BG" },
+  { code: "en", flag: "🇬🇧", label: "EN", name: "English", tts: "en-GB" },
+  { code: "de", flag: "🇩🇪", label: "DE", name: "Deutsch", tts: "de-DE" },
+  { code: "fr", flag: "🇫🇷", label: "FR", name: "Français", tts: "fr-FR" },
+  { code: "es", flag: "🇪🇸", label: "ES", name: "Español", tts: "es-ES" },
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -144,6 +145,7 @@ export default function Home() {
   const [address, setAddress] = useState("");
   const [speaking, setSpeaking] = useState(false);
   const [lang, setLang] = useState<Lang>(LANGS[0]);
+  const [langOpen, setLangOpen] = useState(false);
   const [history, setHistory] = useState<Visit[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [photoDesc, setPhotoDesc] = useState("");
@@ -188,73 +190,79 @@ export default function Home() {
     setSpeaking(false);
   }, [address, lang]);
 
-  async function explore() {
+  // Изтегля разказа за дадени координати на конкретен език (споделено от explore и смяна на език)
+  async function streamGuide(lat: number, lon: number, l: Lang, speak: boolean) {
     setContent("");
+    setStatus("loading");
+    abortRef.current?.abort();
+    abortRef.current = new AbortController();
+
+    try {
+      const res = await fetch("/api/explore", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lat, lon, lang: l.code }),
+        signal: abortRef.current.signal,
+      });
+      if (!res.ok) throw new Error("API error");
+
+      const reader = res.body!.getReader();
+      const decoder = new TextDecoder();
+      let headerParsed = false;
+      let buffer = "";
+      let parsedAddress = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+
+        if (!headerParsed) {
+          buffer += chunk;
+          const nullIdx = buffer.indexOf("\x00");
+          if (nullIdx !== -1) {
+            const newlineIdx = buffer.indexOf("\n", nullIdx);
+            if (newlineIdx !== -1) {
+              try {
+                const meta = JSON.parse(buffer.slice(nullIdx + 1, newlineIdx));
+                parsedAddress = meta.address ?? "";
+                setAddress(parsedAddress);
+                if (speak) setTimeout(() => speakText(parsedAddress, l.tts), 300);
+              } catch { /* ignore */ }
+              const rest = buffer.slice(newlineIdx + 1);
+              if (rest) setContent(rest);
+              headerParsed = true;
+              buffer = "";
+            }
+          }
+        } else {
+          setContent((prev) => prev + chunk);
+        }
+      }
+
+      setStatus("done");
+      if (parsedAddress) saveVisit(parsedAddress, lat, lon);
+    } catch (e: unknown) {
+      if (e instanceof Error && e.name === "AbortError") return;
+      setError("Нещо се обърка. Провери ANTHROPIC_API_KEY.");
+      setStatus("error");
+    }
+  }
+
+  function explore() {
     setError("");
     setAddress("");
     setCoords(null);
     setPhotoDesc("");
+    setTimeline([]);
     setStatus("locating");
 
     navigator.geolocation.getCurrentPosition(
-      async (pos) => {
+      (pos) => {
         const lat = pos.coords.latitude;
         const lon = pos.coords.longitude;
         setCoords({ lat, lon });
-        setStatus("loading");
-        abortRef.current = new AbortController();
-
-        try {
-          const res = await fetch("/api/explore", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ lat, lon, lang: lang.code }),
-            signal: abortRef.current.signal,
-          });
-
-          if (!res.ok) throw new Error("API error");
-
-          const reader = res.body!.getReader();
-          const decoder = new TextDecoder();
-          let headerParsed = false;
-          let buffer = "";
-          let parsedAddress = "";
-
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            const chunk = decoder.decode(value, { stream: true });
-
-            if (!headerParsed) {
-              buffer += chunk;
-              const nullIdx = buffer.indexOf("\x00");
-              if (nullIdx !== -1) {
-                const newlineIdx = buffer.indexOf("\n", nullIdx);
-                if (newlineIdx !== -1) {
-                  try {
-                    const meta = JSON.parse(buffer.slice(nullIdx + 1, newlineIdx));
-                    parsedAddress = meta.address ?? "";
-                    setAddress(parsedAddress);
-                    setTimeout(() => speakText(parsedAddress, lang.tts), 300);
-                  } catch { /* ignore */ }
-                  const rest = buffer.slice(newlineIdx + 1);
-                  if (rest) setContent(rest);
-                  headerParsed = true;
-                  buffer = "";
-                }
-              }
-            } else {
-              setContent((prev) => prev + chunk);
-            }
-          }
-
-          setStatus("done");
-          if (parsedAddress) saveVisit(parsedAddress, lat, lon);
-        } catch (e: unknown) {
-          if (e instanceof Error && e.name === "AbortError") return;
-          setError("Нещо се обърка. Провери ANTHROPIC_API_KEY.");
-          setStatus("error");
-        }
+        streamGuide(lat, lon, lang, true);
       },
       () => {
         setError("Не можах да открия местоположението. Разреши GPS достъп.");
@@ -262,6 +270,17 @@ export default function Home() {
       },
       { enableHighAccuracy: true, timeout: 10000 }
     );
+  }
+
+  // Смяна на език — ако вече има резултат, презарежда разказа на новия език
+  function changeLang(l: Lang) {
+    setLang(l);
+    setLangOpen(false);
+    if (coords && (status === "done" || status === "loading")) {
+      setTimeline([]); // старите снимки/надписи са на другия език
+      setPhotoDesc("");
+      streamGuide(coords.lat, coords.lon, l, true);
+    }
   }
 
   async function handlePhoto(e: React.ChangeEvent<HTMLInputElement>) {
@@ -340,17 +359,41 @@ export default function Home() {
           <img src="/generated/logo.png" alt="Where am I" className="logo-badge h-12 w-12 rounded-2xl shadow-md" />
         </header>
 
-        {/* ── Language selector ── */}
-        <div className="mt-5 flex gap-1.5 overflow-x-auto pb-1 fade-in">
-          {LANGS.map((l) => (
-            <button
-              key={l.code}
-              onClick={() => setLang(l)}
-              className={`chip flex-shrink-0 px-3.5 py-2 text-sm font-medium ${lang.code === l.code ? "chip-active" : ""}`}
-            >
-              <span className="mr-1">{l.flag}</span>{l.label}
-            </button>
-          ))}
+        {/* ── Language dropdown ── */}
+        <div className="relative z-40 mt-5 fade-in">
+          <button
+            onClick={() => setLangOpen((o) => !o)}
+            className="card flex w-full items-center gap-3 px-4 py-3"
+          >
+            <GlobeIcon className="h-5 w-5" style={{ color: "var(--blue)" }} />
+            <span className="flex-1 text-left text-sm font-semibold" style={{ color: "var(--ink)" }}>
+              <span className="mr-1.5">{lang.flag}</span>{lang.name}
+            </span>
+            <ChevronIcon className={`h-5 w-5 transition-transform ${langOpen ? "rotate-180" : ""}`} style={{ color: "var(--muted)" }} />
+          </button>
+
+          {langOpen && (
+            <>
+              {/* клик извън менюто го затваря */}
+              <div className="fixed inset-0 z-20" onClick={() => setLangOpen(false)} />
+              <div className="card absolute left-0 right-0 top-full z-30 mt-2 overflow-hidden p-1.5 fade-in">
+                {LANGS.map((l) => (
+                  <button
+                    key={l.code}
+                    onClick={() => changeLang(l)}
+                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition-colors"
+                    style={lang.code === l.code
+                      ? { background: "var(--blue-soft)", color: "var(--blue-d)", fontWeight: 600 }
+                      : { color: "var(--slate)" }}
+                  >
+                    <span className="text-base">{l.flag}</span>
+                    <span className="flex-1">{l.name}</span>
+                    {lang.code === l.code && <CheckIcon className="h-4 w-4" style={{ color: "var(--blue)" }} />}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </div>
 
         {/* ── IDLE hero ── */}

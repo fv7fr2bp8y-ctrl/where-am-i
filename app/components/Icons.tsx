@@ -105,3 +105,15 @@ export const SearchIcon = (p: P) => (
     <path d="m20 20-3.5-3.5" />
   </svg>
 );
+
+export const ChevronIcon = (p: P) => (
+  <svg {...base(p)}>
+    <path d="m6 9 6 6 6-6" />
+  </svg>
+);
+
+export const CheckIcon = (p: P) => (
+  <svg {...base(p)}>
+    <path d="m5 12 5 5L20 7" />
+  </svg>
+);
