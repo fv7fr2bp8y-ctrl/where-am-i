@@ -40,26 +40,49 @@ const LANGS: Lang[] = [
 // ── Helpers ───────────────────────────────────────────────────────────────────
 let currentAudio: HTMLAudioElement | null = null;
 
-async function speakText(text: string) {
-  // Спираме предишния звук
+function stopSpeaking() {
   if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+  if (typeof window !== "undefined" && "speechSynthesis" in window)
+    window.speechSynthesis.cancel();
+}
 
+// Резервен браузърен глас (когато ElevenLabs не е наличен)
+function browserSpeak(text: string, ttsLang: string) {
+  if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(text);
+  const voices = window.speechSynthesis.getVoices();
+  const voice = voices.find((v) => v.lang.startsWith(ttsLang.slice(0, 2)));
+  if (voice) utter.voice = voice;
+  utter.lang = ttsLang;
+  utter.rate = 0.95;
+  window.speechSynthesis.speak(utter);
+}
+
+async function speakText(text: string, ttsLang: string) {
+  stopSpeaking();
+
+  // Първо опитваме висококачествения ElevenLabs глас
   try {
     const res = await fetch("/api/tts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text }),
     });
-    if (!res.ok) throw new Error("TTS failed");
-
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    currentAudio = new Audio(url);
-    currentAudio.play();
-    currentAudio.onended = () => URL.revokeObjectURL(url);
-  } catch (e) {
-    console.error("TTS error:", e);
+    if (res.ok) {
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      currentAudio = new Audio(url);
+      currentAudio.onended = () => URL.revokeObjectURL(url);
+      await currentAudio.play();
+      return;
+    }
+  } catch {
+    /* пада към браузърния глас по-долу */
   }
+
+  // Резервен вариант — браузърният глас (винаги има звук)
+  browserSpeak(text, ttsLang);
 }
 
 // Рендира **удебелен** текст в рамките на ред
@@ -155,9 +178,9 @@ export default function Home() {
   const handleSpeak = useCallback(async () => {
     if (!address) return;
     setSpeaking(true);
-    await speakText(address);
+    await speakText(address, lang.tts);
     setSpeaking(false);
-  }, [address]);
+  }, [address, lang]);
 
   async function explore() {
     setContent("");
@@ -206,7 +229,7 @@ export default function Home() {
                     const meta = JSON.parse(buffer.slice(nullIdx + 1, newlineIdx));
                     parsedAddress = meta.address ?? "";
                     setAddress(parsedAddress);
-                    setTimeout(() => speakText(parsedAddress), 300);
+                    setTimeout(() => speakText(parsedAddress, lang.tts), 300);
                   } catch { /* ignore */ }
                   const rest = buffer.slice(newlineIdx + 1);
                   if (rest) setContent(rest);
@@ -281,7 +304,7 @@ export default function Home() {
 
   function reset() {
     abortRef.current?.abort();
-    if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+    stopSpeaking();
     setStatus("idle");
     setContent("");
     setCoords(null);
