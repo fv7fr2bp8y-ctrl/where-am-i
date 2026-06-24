@@ -43,6 +43,11 @@ function pcmToWav(pcm: Buffer, rate: number): Buffer {
 
 interface InlineData { data?: string; mimeType?: string }
 
+// Прост in-memory кеш по текст (помага при повторно пускане и пести quota)
+const wavCache = new Map<string, Buffer>();
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 async function geminiTTS(text: string, key: string): Promise<InlineData | null> {
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${key}`,
@@ -65,6 +70,17 @@ async function geminiTTS(text: string, key: string): Promise<InlineData | null> 
   return part?.data ? part : null;
 }
 
+// Няколко опита с нарастващо забавяне — заобикаля trottling на безплатния tier
+async function geminiTTSWithRetry(text: string, key: string): Promise<InlineData | null> {
+  const delays = [0, 800, 1800, 3000];
+  for (let i = 0; i < delays.length; i++) {
+    if (delays[i]) await sleep(delays[i]);
+    const part = await geminiTTS(text, key);
+    if (part?.data) return part;
+  }
+  return null;
+}
+
 export async function POST(req: NextRequest) {
   await connection();
 
@@ -76,16 +92,24 @@ export async function POST(req: NextRequest) {
   if (!key)
     return NextResponse.json({ error: "Missing GOOGLE_API_KEY" }, { status: 500 });
 
-  // Един повторен опит при празен отговор (от рецептата)
-  let part = await geminiTTS(text, key);
-  if (!part) part = await geminiTTS(text, key);
+  // Кеш: ако сме озвучавали този текст, връщаме веднага (без quota разход)
+  const cached = wavCache.get(text);
+  if (cached) {
+    return new NextResponse(new Uint8Array(cached), {
+      headers: { "Content-Type": "audio/wav", "Cache-Control": "no-store" },
+    });
+  }
+
+  const part = await geminiTTSWithRetry(text, key);
   if (!part?.data) {
-    return NextResponse.json({ error: "TTS returned no audio" }, { status: 502 });
+    // Безплатният tier е троттлнат — клиентът пада на браузърния глас
+    return NextResponse.json({ error: "TTS rate-limited" }, { status: 429 });
   }
 
   const rate = parseInt((part.mimeType?.match(/rate=(\d+)/) ?? [])[1] ?? "24000", 10);
   const pcm = Buffer.from(part.data, "base64");
   const wav = pcmToWav(pcm, rate);
+  wavCache.set(text, wav);
 
   return new NextResponse(new Uint8Array(wav), {
     headers: {
