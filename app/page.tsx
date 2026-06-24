@@ -2,6 +2,12 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import dynamic from "next/dynamic";
+import Splash from "./components/Splash";
+import {
+  PinIcon, LandmarkIcon, FoodIcon, SparkleIcon, ClockIcon,
+  CameraIcon, SpeakerIcon, GlobeIcon, CompassIcon, RefreshIcon,
+  WarningIcon,
+} from "./components/Icons";
 
 const Map = dynamic(() => import("./components/Map"), { ssr: false });
 
@@ -319,20 +325,19 @@ export default function Home() {
 
   return (
     <div className="bg-app">
+      <Splash />
       <div className="relative z-10 mx-auto w-full max-w-xl px-5 pb-16 pt-7">
 
         {/* ── Header ── */}
         <header className="flex items-center justify-between fade-in">
           <div>
-            <p className="text-sm font-medium" style={{ color: "var(--muted)" }}>Накъде днес? 🌍</p>
+            <p className="text-sm font-medium" style={{ color: "var(--muted)" }}>Накъде днес?</p>
             <h1 className="text-2xl font-extrabold tracking-tight" style={{ color: "var(--ink)" }}>
               Where am I?
             </h1>
           </div>
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl text-xl floaty"
-               style={{ background: "var(--blue-soft)" }}>
-            🧭
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/generated/logo.png" alt="Where am I" className="logo-badge h-12 w-12 rounded-2xl shadow-md" />
         </header>
 
         {/* ── Language selector ── */}
@@ -357,7 +362,10 @@ export default function Home() {
               <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full" style={{ background: "rgba(255,255,255,0.10)" }} />
               <div className="absolute -bottom-10 -left-6 h-28 w-28 rounded-full" style={{ background: "rgba(255,255,255,0.08)" }} />
               <div className="relative">
-                <div className="mb-2 inline-block text-4xl floaty">📍</div>
+                <div className="mb-3 inline-flex h-14 w-14 items-center justify-center rounded-2xl floaty"
+                     style={{ background: "rgba(255,255,255,0.18)" }}>
+                  <PinIcon className="h-8 w-8 text-white" />
+                </div>
                 <h2 className="text-xl font-bold text-white">Открий своето място</h2>
                 <p className="mx-auto mt-1 max-w-xs text-sm text-white/80">
                   История, интересни факти и къде да хапнеш — само с едно докосване.
@@ -375,16 +383,18 @@ export default function Home() {
             {/* Category tiles */}
             <div className="mt-5 grid grid-cols-3 gap-3">
               {[
-                { icon: "🏛️", label: "История" },
-                { icon: "🍽️", label: "Хранене" },
-                { icon: "✨", label: "Факти" },
-                { icon: "🕰️", label: "През вековете" },
-                { icon: "📸", label: "Снимка" },
-                { icon: "🔊", label: "Глас" },
-              ].map((f) => (
-                <div key={f.label} className="tile flex flex-col items-center gap-2 px-2 py-4">
-                  <span className="tile-icon">{f.icon}</span>
-                  <span className="text-xs font-semibold" style={{ color: "var(--slate)" }}>{f.label}</span>
+                { Icon: LandmarkIcon, label: "История" },
+                { Icon: FoodIcon, label: "Хранене" },
+                { Icon: SparkleIcon, label: "Факти" },
+                { Icon: ClockIcon, label: "През вековете" },
+                { Icon: CameraIcon, label: "Снимка" },
+                { Icon: SpeakerIcon, label: "Глас" },
+              ].map(({ Icon, label }) => (
+                <div key={label} className="tile flex flex-col items-center gap-2 px-2 py-4">
+                  <span className="tile-icon" style={{ color: "var(--blue)" }}>
+                    <Icon className="h-6 w-6" />
+                  </span>
+                  <span className="text-xs font-semibold" style={{ color: "var(--slate)" }}>{label}</span>
                 </div>
               ))}
             </div>
@@ -404,13 +414,15 @@ export default function Home() {
             {showHistory && history.length > 0 && (
               <div className="card mt-4 p-5 fade-in">
                 <div className="mb-3 flex items-center justify-between">
-                  <h3 className="text-base font-bold" style={{ color: "var(--ink)" }}>🗺️ Дневник</h3>
+                  <h3 className="flex items-center gap-2 text-base font-bold" style={{ color: "var(--ink)" }}>
+                    <GlobeIcon className="h-5 w-5" style={{ color: "var(--blue)" }} /> Дневник
+                  </h3>
                   <button onClick={clearHistory} className="text-xs font-semibold" style={{ color: "var(--blue-d)" }}>изчисти</button>
                 </div>
                 <div className="space-y-0.5">
                   {history.map((v) => (
                     <div key={v.id} className="flex items-start gap-3 border-b py-2.5 last:border-0" style={{ borderColor: "var(--line)" }}>
-                      <span className="mt-0.5">📍</span>
+                      <PinIcon className="mt-0.5 h-4 w-4 flex-shrink-0" style={{ color: "var(--blue)" }} />
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium" style={{ color: "var(--ink)" }}>{v.address}</p>
                         <p className="mt-0.5 text-xs" style={{ color: "var(--muted)" }}>{v.date}</p>
@@ -426,7 +438,13 @@ export default function Home() {
         {/* ── LOCATING ── */}
         {status === "locating" && (
           <div className="mt-16 text-center fade-in">
-            <div className="mb-4 inline-block text-5xl floaty">📡</div>
+            <div className="relative mx-auto mb-5 flex h-16 w-16 items-center justify-center">
+              <span className="absolute inset-0 rounded-full ping-slow" style={{ background: "var(--blue)" }} />
+              <span className="relative flex h-16 w-16 items-center justify-center rounded-full"
+                    style={{ background: "var(--blue-soft)", color: "var(--blue)" }}>
+                <CompassIcon className="h-8 w-8" />
+              </span>
+            </div>
             <p className="text-[15px] font-medium" style={{ color: "var(--slate)" }}>Засичам къде си…</p>
           </div>
         )}
@@ -446,15 +464,15 @@ export default function Home() {
             <div className="card p-5">
               {address ? (
                 <div className="flex items-start gap-2">
-                  <span className="mt-0.5 text-base">📍</span>
+                  <PinIcon className="mt-0.5 h-5 w-5 flex-shrink-0" style={{ color: "var(--blue)" }} />
                   <h2 className="flex-1 text-base font-bold leading-snug" style={{ color: "var(--ink)" }}>{address}</h2>
                   <button
                     onClick={handleSpeak}
                     title="Чети на глас"
-                    className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl text-lg transition-transform ${speaking ? "animate-pulse" : "active:scale-90"}`}
-                    style={{ background: "var(--blue-soft)" }}
+                    className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl transition-transform ${speaking ? "animate-pulse" : "active:scale-90"}`}
+                    style={{ background: "var(--blue-soft)", color: "var(--blue)" }}
                   >
-                    🔊
+                    <SpeakerIcon className="h-5 w-5" />
                   </button>
                 </div>
               ) : (
@@ -464,17 +482,17 @@ export default function Home() {
               {/* Stat chips */}
               <div className="mt-4 flex rounded-2xl border" style={{ borderColor: "var(--line)" }}>
                 <div className="stat">
-                  <span className="text-base">🌐</span>
+                  <GlobeIcon className="h-5 w-5" style={{ color: "var(--blue)" }} />
                   <span className="text-sm font-bold" style={{ color: "var(--ink)" }}>{coords.lat.toFixed(4)}</span>
                   <span className="text-[11px]" style={{ color: "var(--muted)" }}>Ширина</span>
                 </div>
                 <div className="stat">
-                  <span className="text-base">🧭</span>
+                  <CompassIcon className="h-5 w-5" style={{ color: "var(--blue)" }} />
                   <span className="text-sm font-bold" style={{ color: "var(--ink)" }}>{coords.lon.toFixed(4)}</span>
                   <span className="text-[11px]" style={{ color: "var(--muted)" }}>Дължина</span>
                 </div>
                 <div className="stat">
-                  <span className="text-base">{lang.flag}</span>
+                  <span className="text-base leading-none">{lang.flag}</span>
                   <span className="text-sm font-bold" style={{ color: "var(--ink)" }}>{lang.label}</span>
                   <span className="text-[11px]" style={{ color: "var(--muted)" }}>Език</span>
                 </div>
@@ -500,15 +518,15 @@ export default function Home() {
             {/* Actions when done */}
             {status === "done" && (
               <div className="grid grid-cols-2 gap-2.5 fade-in">
-                <button onClick={() => photoRef.current?.click()} className="btn-soft px-4 py-3.5 text-sm">
-                  📸 Снимай мястото
+                <button onClick={() => photoRef.current?.click()} className="btn-soft flex items-center justify-center gap-2 px-4 py-3.5 text-sm">
+                  <CameraIcon className="h-5 w-5" /> Снимай мястото
                 </button>
                 <input ref={photoRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handlePhoto} />
-                <button onClick={loadTimeline} disabled={timelineLoading} className="btn-soft px-4 py-3.5 text-sm disabled:opacity-50">
-                  🕰️ През историята
+                <button onClick={loadTimeline} disabled={timelineLoading} className="btn-soft flex items-center justify-center gap-2 px-4 py-3.5 text-sm disabled:opacity-50">
+                  <ClockIcon className="h-5 w-5" /> През историята
                 </button>
-                <button onClick={reset} className="btn-primary col-span-2 px-4 py-3.5 text-sm font-semibold">
-                  🔄 Открий ново място
+                <button onClick={reset} className="btn-primary col-span-2 flex items-center justify-center gap-2 px-4 py-3.5 text-sm font-semibold">
+                  <RefreshIcon className="h-5 w-5" /> Открий ново място
                 </button>
               </div>
             )}
@@ -516,7 +534,10 @@ export default function Home() {
             {/* Timeline loading */}
             {timelineLoading && (
               <div className="card p-6 text-center fade-in">
-                <div className="mb-3 inline-block text-3xl floaty">🕰️</div>
+                <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-2xl floaty"
+                     style={{ background: "var(--blue-soft)", color: "var(--blue)" }}>
+                  <ClockIcon className="h-6 w-6" />
+                </div>
                 <p className="text-sm" style={{ color: "var(--slate)" }}>
                   Claude избира епохи и рисува как е изглеждало мястото…
                 </p>
@@ -531,8 +552,8 @@ export default function Home() {
             {/* Timeline gallery */}
             {timeline.length > 0 && !timelineLoading && (
               <div className="space-y-4 fade-in">
-                <h3 className="text-center text-lg font-bold" style={{ color: "var(--ink)" }}>
-                  🕰️ Мястото през историята
+                <h3 className="flex items-center justify-center gap-2 text-center text-lg font-bold" style={{ color: "var(--ink)" }}>
+                  <ClockIcon className="h-5 w-5" style={{ color: "var(--blue)" }} /> Мястото през историята
                 </h3>
                 {timeline.map((era, i) => (
                   <div key={i} className="card overflow-hidden">
@@ -545,7 +566,7 @@ export default function Home() {
                       />
                     ) : (
                       <div className="flex aspect-square w-full items-center justify-center text-sm" style={{ color: "var(--muted)", background: "var(--bg-2)" }}>
-                        🖼️ Изображението не успя да се генерира
+                        Изображението не успя да се генерира
                       </div>
                     )}
                     <div className="p-5">
@@ -565,14 +586,17 @@ export default function Home() {
             {/* Photo description */}
             {photoLoading && (
               <div className="card p-5 text-center fade-in">
-                <div className="mb-2 inline-block text-2xl animate-spin">🔍</div>
+                <div className="mb-2 inline-flex h-11 w-11 items-center justify-center rounded-2xl animate-pulse"
+                     style={{ background: "var(--blue-soft)", color: "var(--blue)" }}>
+                  <CameraIcon className="h-6 w-6" />
+                </div>
                 <p className="text-sm" style={{ color: "var(--slate)" }}>Claude разглежда снимката…</p>
               </div>
             )}
             {photoDesc && !photoLoading && (
               <div className="card p-5 fade-in">
-                <h3 className="mb-2 text-base font-bold" style={{ color: "var(--blue-d)" }}>
-                  📸 Claude вижда
+                <h3 className="mb-2 flex items-center gap-2 text-base font-bold" style={{ color: "var(--blue-d)" }}>
+                  <CameraIcon className="h-5 w-5" /> Claude вижда
                 </h3>
                 <p className="text-sm leading-relaxed" style={{ color: "var(--slate)" }}>{photoDesc}</p>
               </div>
@@ -584,7 +608,10 @@ export default function Home() {
         {status === "error" && (
           <div className="mt-10 space-y-4 text-center fade-in">
             <div className="card p-7">
-              <div className="mb-3 text-3xl">⚠️</div>
+              <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-2xl"
+                   style={{ background: "#fdeaea", color: "#d64545" }}>
+                <WarningIcon className="h-6 w-6" />
+              </div>
               <p className="text-sm" style={{ color: "var(--slate)" }}>{error}</p>
             </div>
             <button onClick={reset} className="btn-soft px-7 py-3 text-sm">
