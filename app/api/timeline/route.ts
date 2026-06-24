@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
 For each, return:
 - "year": a short label of the period (in ${captionLang})
 - "caption": one sentence describing what was happening there then (in ${captionLang})
-- "prompt": a detailed, vivid ENGLISH image-generation prompt describing how this exact location looked at that time — architecture, people, clothing, atmosphere, historically accurate. Photorealistic or period-appropriate illustration style.
+- "prompt": a detailed, vivid ENGLISH image-generation prompt describing how this exact location looked at that time — architecture, people, clothing, atmosphere, historically accurate. Describe it as a REALISTIC PHOTOGRAPH: specify camera feel (e.g. "documentary photograph", "vintage photo", "cinematic wide shot"), natural lighting, realistic textures and depth of field. Avoid cartoon/illustration look.
 
 Respond ONLY with a JSON array of 3 objects, no other text. Example:
 [{"year":"...","caption":"...","prompt":"..."}]`,
@@ -78,6 +78,8 @@ Respond ONLY with a JSON array of 3 objects, no other text. Example:
 
 const IMAGE_MODEL = "gemini-2.5-flash-image";
 
+const REALISM = " — ultra-realistic photograph, photorealistic, highly detailed, natural lighting, realistic textures, sharp focus, cinematic depth of field, true-to-life colors, 4k, NOT a cartoon, NOT an illustration.";
+
 async function geminiImageOnce(prompt: string, key: string): Promise<string | null> {
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${IMAGE_MODEL}:generateContent?key=${key}`,
@@ -85,7 +87,7 @@ async function geminiImageOnce(prompt: string, key: string): Promise<string | nu
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
+        contents: [{ parts: [{ text: prompt + REALISM }] }],
         generationConfig: { responseModalities: ["IMAGE"] },
       }),
     }

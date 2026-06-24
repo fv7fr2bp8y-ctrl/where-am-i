@@ -49,47 +49,28 @@ let currentAudio: HTMLAudioElement | null = null;
 
 function stopSpeaking() {
   if (currentAudio) { currentAudio.pause(); currentAudio = null; }
-  if (typeof window !== "undefined" && "speechSynthesis" in window)
-    window.speechSynthesis.cancel();
 }
 
-// Резервен браузърен глас (когато ElevenLabs не е наличен)
-function browserSpeak(text: string, ttsLang: string) {
-  if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
-  window.speechSynthesis.cancel();
-  const utter = new SpeechSynthesisUtterance(text);
-  const voices = window.speechSynthesis.getVoices();
-  const voice = voices.find((v) => v.lang.startsWith(ttsLang.slice(0, 2)));
-  if (voice) utter.voice = voice;
-  utter.lang = ttsLang;
-  utter.rate = 0.95;
-  window.speechSynthesis.speak(utter);
-}
-
-async function speakText(text: string, ttsLang: string) {
+// Само висококачественият Gemini глас. Без роботски браузърен резерв.
+// Връща true при успех, false ако гласът не е наличен (напр. временно зает).
+async function speakText(text: string, _ttsLang: string): Promise<boolean> {
   stopSpeaking();
-
-  // Първо опитваме висококачествения ElevenLabs глас
   try {
     const res = await fetch("/api/tts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text }),
     });
-    if (res.ok) {
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      currentAudio = new Audio(url);
-      currentAudio.onended = () => URL.revokeObjectURL(url);
-      await currentAudio.play();
-      return;
-    }
+    if (!res.ok) return false;
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    currentAudio = new Audio(url);
+    currentAudio.onended = () => URL.revokeObjectURL(url);
+    await currentAudio.play();
+    return true;
   } catch {
-    /* пада към браузърния глас по-долу */
+    return false;
   }
-
-  // Резервен вариант — браузърният глас (винаги има звук)
-  browserSpeak(text, ttsLang);
 }
 
 // Рендира **удебелен** текст в рамките на ред
@@ -433,9 +414,9 @@ export default function Home() {
                 { Icon: CameraIcon, label: "Снимка" },
                 { Icon: SpeakerIcon, label: "Глас" },
               ].map(({ Icon, label }) => (
-                <div key={label} className="tile flex flex-col items-center gap-2 px-2 py-4">
+                <div key={label} className="tile flex flex-col items-center gap-2.5 px-2 py-5">
                   <span className="tile-icon" style={{ color: "var(--blue)" }}>
-                    <Icon className="h-6 w-6" />
+                    <Icon className="h-7 w-7" />
                   </span>
                   <span className="text-xs font-semibold" style={{ color: "var(--slate)" }}>{label}</span>
                 </div>

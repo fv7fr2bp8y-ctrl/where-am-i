@@ -20,7 +20,7 @@ function getKey(...names: string[]): string {
 }
 
 const MODEL = "gemini-2.5-flash-preview-tts";
-const VOICE = "Schedar"; // мъжки, спокоен (от рецептата)
+const VOICE = "Sulafat"; // топъл, естествен разказвачески глас
 
 // Опакова суров PCM (16-bit mono) в WAV буфер с 44-байтов хедър
 function pcmToWav(pcm: Buffer, rate: number): Buffer {

@@ -41,7 +41,7 @@ export default function Map({ lat, lon, address }: MapProps) {
     >
       <TileLayer
         attribution='&copy; <a href="https://carto.com/">CARTO</a> · <a href="https://www.openstreetmap.org/copyright">OSM</a>'
-        url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+        url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png"
       />
       <Recenter lat={lat} lon={lon} />
       <Marker position={[lat, lon]} icon={icon}>
