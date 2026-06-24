@@ -1,69 +1,145 @@
 @import "tailwindcss";
 
+/* ── Warm premium "traveler" palette ─────────────────────────────────────── */
 :root {
-  --font-inter: "Inter", sans-serif;
+  --cream:      #faf5ec;
+  --cream-2:    #f3e9d8;
+  --card:       #fffcf6;
+  --terracotta: #c2603c;
+  --terracotta-d: #a84a2b;
+  --amber:      #d99a4e;
+  --espresso:   #2c2317;
+  --ink:        #4a3d2c;
+  --muted:      #8a7a64;
+  --border:     #e8dcc7;
+  --font-display: var(--font-playfair), Georgia, serif;
+  --font-body: var(--font-inter), system-ui, sans-serif;
 }
 
 * {
-  font-family: var(--font-inter), system-ui, sans-serif;
+  font-family: var(--font-body);
+  -webkit-tap-highlight-color: transparent;
 }
 
-body {
-  background: #0b0f1a;
-  color: #f1f5f9;
-}
+html, body { background: var(--cream); color: var(--espresso); }
 
-/* Animated gradient background */
+.font-display { font-family: var(--font-display); }
+
+/* ── App background: warm layered gradient + paper grain ──────────────────── */
 .bg-app {
-  background: linear-gradient(135deg, #0b0f1a 0%, #0f172a 50%, #1a1035 100%);
-  min-height: 100vh;
+  position: relative;
+  min-height: 100dvh;
+  background:
+    radial-gradient(circle at 15% 0%, rgba(217,154,78,0.18) 0%, transparent 45%),
+    radial-gradient(circle at 90% 10%, rgba(194,96,60,0.14) 0%, transparent 40%),
+    linear-gradient(180deg, var(--cream) 0%, var(--cream-2) 100%);
+  background-attachment: fixed;
 }
 
-/* Subtle floating dots */
-.bg-app::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  background-image:
-    radial-gradient(circle at 20% 20%, rgba(99,102,241,0.08) 0%, transparent 50%),
-    radial-gradient(circle at 80% 80%, rgba(139,92,246,0.06) 0%, transparent 50%);
-  pointer-events: none;
-  z-index: 0;
+/* ── Cards ───────────────────────────────────────────────────────────────── */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 1.5rem;
+  box-shadow:
+    0 1px 2px rgba(44,35,23,0.04),
+    0 12px 30px -12px rgba(44,35,23,0.16);
 }
 
-/* Glass card */
-.glass {
-  background: rgba(255,255,255,0.04);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 1.25rem;
+/* ── Buttons ─────────────────────────────────────────────────────────────── */
+.btn-primary {
+  background: linear-gradient(135deg, var(--terracotta) 0%, var(--terracotta-d) 100%);
+  color: #fff;
+  border-radius: 1rem;
+  box-shadow: 0 10px 24px -8px rgba(168,74,43,0.6);
+  transition: transform .15s ease, box-shadow .15s ease, filter .15s ease;
+}
+.btn-primary:hover { filter: brightness(1.06); }
+.btn-primary:active { transform: scale(0.97); }
+
+.btn-soft {
+  background: rgba(255,255,255,0.7);
+  border: 1px solid var(--border);
+  color: var(--ink);
+  border-radius: 1rem;
+  transition: all .15s ease;
+}
+.btn-soft:hover { background: #fff; border-color: var(--terracotta); color: var(--terracotta-d); }
+.btn-soft:active { transform: scale(0.97); }
+
+/* ── Chips (language) ────────────────────────────────────────────────────── */
+.chip {
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.6);
+  color: var(--muted);
+  border-radius: 999px;
+  transition: all .15s ease;
+}
+.chip:active { transform: scale(0.94); }
+.chip-active {
+  background: linear-gradient(135deg, var(--terracotta) 0%, var(--terracotta-d) 100%);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 6px 16px -6px rgba(168,74,43,0.7);
 }
 
-/* Pulse ring animation for GPS button */
+/* ── Section heading inside the guide ────────────────────────────────────── */
+.guide-h {
+  font-family: var(--font-display);
+  color: var(--terracotta-d);
+  font-weight: 700;
+}
+
+/* ── Animations ──────────────────────────────────────────────────────────── */
 @keyframes ping-slow {
-  0%   { transform: scale(1);   opacity: 0.6; }
-  70%  { transform: scale(1.4); opacity: 0; }
-  100% { transform: scale(1.4); opacity: 0; }
+  0%   { transform: scale(1);   opacity: .55; }
+  70%  { transform: scale(1.5); opacity: 0; }
+  100% { transform: scale(1.5); opacity: 0; }
 }
-.ping-slow { animation: ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite; }
+.ping-slow { animation: ping-slow 2.2s cubic-bezier(0,0,0.2,1) infinite; }
 
-/* Shimmer loading */
-@keyframes shimmer {
-  0%   { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
+@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
 .shimmer {
-  background: linear-gradient(90deg, transparent 25%, rgba(99,102,241,0.15) 50%, transparent 75%);
+  background: linear-gradient(90deg, transparent 20%, rgba(194,96,60,0.25) 50%, transparent 80%);
   background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
+  animation: shimmer 1.4s infinite;
 }
 
-/* Fade in */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(12px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-.fade-in { animation: fadeIn 0.4s ease both; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+.fade-in { animation: fadeUp .45s cubic-bezier(0.22,1,0.36,1) both; }
 
-/* Leaflet map border-radius fix */
-.leaflet-container { border-radius: 1.25rem; }
+@keyframes floaty { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+.floaty { animation: floaty 3s ease-in-out infinite; }
+
+/* skeleton block */
+.skeleton {
+  background: linear-gradient(90deg, rgba(232,220,199,0.5) 25%, rgba(232,220,199,0.9) 37%, rgba(232,220,199,0.5) 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+  border-radius: 0.75rem;
+}
+
+/* ── Leaflet tweaks ──────────────────────────────────────────────────────── */
+.leaflet-container { border-radius: 1.5rem; font-family: var(--font-body); }
+.leaflet-popup-content-wrapper {
+  border-radius: 0.9rem;
+  box-shadow: 0 12px 30px -12px rgba(44,35,23,0.4);
+}
+.leaflet-popup-content { font-size: 0.8rem; color: var(--espresso); }
+.leaflet-control-attribution { font-size: 9px; opacity: 0.6; }
+
+/* custom pin */
+.pin-dot {
+  width: 22px; height: 22px;
+  background: var(--terracotta);
+  border: 3px solid #fff;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  box-shadow: 0 4px 10px rgba(168,74,43,0.5);
+}
+.pin-pulse {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: rgba(194,96,60,0.5);
+  animation: ping-slow 2s ease-out infinite;
+}

@@ -73,23 +73,25 @@ export async function POST(req: NextRequest) {
 
 ${lp.prompt}
 
-Use this exact format:
+Use this exact structure, but TRANSLATE the section headings into the target language (keep the emoji and the "## " prefix):
 
-## 📍 Where I am
+## 📍 [heading: "Where I am"]
 
 Short description of the exact location (1-2 sentences).
 
-## 🏛️ History
+## 🏛️ [heading: "History"]
 
 Interesting history of the area (3-4 sentences).
 
-## ✨ Fun facts
+## ✨ [heading: "Fun facts"]
 
 3 interesting facts, each on a new line starting with "-".
 
-## 🍽️ Where to eat
+## 🍽️ [heading: "Where to eat"]
 
-Recommend 3-4 types of restaurants or specific places suitable for this area.`,
+Recommend 3-4 types of restaurants or specific places suitable for this area.
+
+IMPORTANT: All text including the headings must be written in the target language.`,
     }],
   });
 

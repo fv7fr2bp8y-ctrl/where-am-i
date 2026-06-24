@@ -62,26 +62,43 @@ async function speakText(text: string) {
   }
 }
 
+// Рендира **удебелен** текст в рамките на ред
+function renderInline(text: string) {
+  return text.split(/(\*\*[^*]+\*\*)/g).map((part, j) => {
+    if (part.startsWith("**") && part.endsWith("**"))
+      return (
+        <strong key={j} style={{ color: "var(--espresso)" }}>
+          {part.slice(2, -2)}
+        </strong>
+      );
+    return part;
+  });
+}
+
 function MarkdownText({ text }: { text: string }) {
   return (
     <div className="space-y-1">
       {text.split("\n").map((line, i) => {
         if (line.startsWith("## "))
           return (
-            <h2 key={i} className="text-lg font-semibold mt-5 mb-1 text-indigo-300 tracking-wide">
-              {line.replace("## ", "")}
+            <h2 key={i} className="guide-h text-xl mt-6 mb-2 first:mt-0">
+              {renderInline(line.replace("## ", ""))}
             </h2>
           );
-        if (line.startsWith("- "))
+        if (line.startsWith("- ") || line.startsWith("• "))
           return (
-            <p key={i} className="text-slate-300 pl-3 border-l-2 border-indigo-800 ml-1 py-0.5 text-sm">
-              {line.slice(2)}
+            <p
+              key={i}
+              className="pl-3 border-l-2 ml-0.5 py-1 text-[15px] leading-relaxed"
+              style={{ borderColor: "var(--amber)", color: "var(--ink)" }}
+            >
+              {renderInline(line.slice(2))}
             </p>
           );
-        if (line.trim() === "") return <div key={i} className="h-2" />;
+        if (line.trim() === "") return <div key={i} className="h-1.5" />;
         return (
-          <p key={i} className="text-slate-300 leading-relaxed text-sm">
-            {line}
+          <p key={i} className="text-[15px] leading-relaxed" style={{ color: "var(--ink)" }}>
+            {renderInline(line)}
           </p>
         );
       })}
@@ -275,128 +292,159 @@ export default function Home() {
     setTimelineLoading(false);
   }
 
+  const busy = status === "locating" || status === "loading";
+
   return (
-    <div className="bg-app relative">
-      <div className="relative z-10 max-w-2xl mx-auto px-4 py-8 space-y-6">
+    <div className="bg-app">
+      <div className="relative z-10 mx-auto w-full max-w-xl px-5 pb-16 pt-7">
 
         {/* ── Header ── */}
-        <div className="text-center fade-in">
-          <div className="text-5xl mb-2 drop-shadow-lg">🌍</div>
-          <h1 className="text-3xl font-bold tracking-tight mb-1 bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">
+        <header className="text-center fade-in">
+          <div className="text-5xl mb-2 floaty inline-block">🧭</div>
+          <h1 className="font-display text-4xl font-extrabold tracking-tight" style={{ color: "var(--espresso)" }}>
             Where am I?
           </h1>
-          <p className="text-slate-500 text-sm">История, факти и хранене наблизо</p>
-        </div>
+          <p className="mt-1.5 text-[15px]" style={{ color: "var(--muted)" }}>
+            Твоят джобен пътеводител из мястото, на което си
+          </p>
+        </header>
 
         {/* ── Language selector ── */}
-        <div className="flex justify-center gap-2 fade-in">
+        <div className="mt-6 flex justify-center gap-1.5 fade-in">
           {LANGS.map((l) => (
             <button
               key={l.code}
               onClick={() => setLang(l)}
-              className={`px-3 py-1.5 rounded-xl text-sm font-medium transition-all ${
-                lang.code === l.code
-                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-900/50"
-                  : "glass text-slate-400 hover:text-white"
-              }`}
+              className={`chip px-3 py-2 text-sm font-medium ${lang.code === l.code ? "chip-active" : ""}`}
             >
-              {l.flag} {l.label}
+              <span className="mr-1">{l.flag}</span>{l.label}
             </button>
           ))}
         </div>
 
-        {/* ── IDLE ── */}
+        {/* ── IDLE hero ── */}
         {status === "idle" && (
-          <div className="text-center fade-in space-y-3">
+          <div className="mt-10 text-center fade-in">
             <div className="relative inline-flex">
-              <div className="absolute inset-0 rounded-2xl bg-indigo-500 ping-slow" />
+              <span className="absolute inset-0 rounded-2xl ping-slow" style={{ background: "var(--terracotta)" }} />
               <button
                 onClick={explore}
-                className="relative bg-indigo-600 hover:bg-indigo-500 active:scale-95 transition-all font-semibold text-base px-10 py-4 rounded-2xl shadow-xl shadow-indigo-900/60"
+                className="btn-primary relative px-9 py-4 text-lg font-semibold"
               >
                 📍 Открий къде съм
               </button>
             </div>
 
+            {/* Feature hints */}
+            <div className="mt-9 grid grid-cols-3 gap-3 fade-in">
+              {[
+                { icon: "🏛️", label: "История" },
+                { icon: "🍽️", label: "Хранене" },
+                { icon: "🕰️", label: "През вековете" },
+              ].map((f) => (
+                <div key={f.label} className="card flex flex-col items-center gap-1.5 px-2 py-4">
+                  <span className="text-2xl">{f.icon}</span>
+                  <span className="text-xs font-medium" style={{ color: "var(--muted)" }}>{f.label}</span>
+                </div>
+              ))}
+            </div>
+
             {/* History toggle */}
             {history.length > 0 && (
-              <div>
-                <button
-                  onClick={() => setShowHistory((p) => !p)}
-                  className="text-slate-500 hover:text-slate-300 text-sm transition-colors"
-                >
-                  {showHistory ? "▲" : "▼"} {history.length} предишни посещения
-                </button>
-              </div>
+              <button
+                onClick={() => setShowHistory((p) => !p)}
+                className="mt-7 text-sm font-medium transition-colors"
+                style={{ color: "var(--muted)" }}
+              >
+                {showHistory ? "▲ Скрий" : "▼"} {history.length} предишни посещения
+              </button>
             )}
           </div>
         )}
 
         {/* ── History panel ── */}
-        {showHistory && history.length > 0 && (
-          <div className="glass p-4 space-y-2 fade-in">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-slate-300">🗺️ История на посещенията</h3>
-              <button onClick={clearHistory} className="text-xs text-red-400 hover:text-red-300">изчисти</button>
+        {showHistory && history.length > 0 && status === "idle" && (
+          <div className="card mt-4 p-5 fade-in">
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="font-display text-base font-bold" style={{ color: "var(--espresso)" }}>
+                🗺️ Дневник на пътешествията
+              </h3>
+              <button onClick={clearHistory} className="text-xs font-medium" style={{ color: "var(--terracotta)" }}>
+                изчисти
+              </button>
             </div>
-            {history.map((v) => (
-              <div key={v.id} className="flex gap-3 items-start py-2 border-b border-white/5 last:border-0">
-                <div className="text-indigo-400 mt-0.5">📍</div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-slate-300 text-xs truncate">{v.address}</p>
-                  <p className="text-slate-600 text-xs mt-0.5">{v.date}</p>
+            <div className="space-y-0.5">
+              {history.map((v) => (
+                <div key={v.id} className="flex items-start gap-3 border-b py-2.5 last:border-0" style={{ borderColor: "var(--border)" }}>
+                  <span className="mt-0.5">📍</span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm" style={{ color: "var(--ink)" }}>{v.address}</p>
+                    <p className="mt-0.5 text-xs" style={{ color: "var(--muted)" }}>{v.date}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
 
         {/* ── LOCATING ── */}
         {status === "locating" && (
-          <div className="text-center py-10 fade-in">
-            <div className="text-5xl animate-bounce mb-3">📡</div>
-            <p className="text-slate-400 text-sm">Засичам GPS...</p>
+          <div className="mt-14 text-center fade-in">
+            <div className="mb-4 inline-block text-5xl floaty">📡</div>
+            <p className="text-[15px]" style={{ color: "var(--muted)" }}>Засичам къде си…</p>
           </div>
         )}
 
         {/* ── MAP + CONTENT ── */}
         {(status === "loading" || status === "done") && coords && (
-          <div className="space-y-4 fade-in">
+          <div className="mt-6 space-y-4 fade-in">
 
             {/* Map */}
-            <div className="overflow-hidden rounded-2xl shadow-2xl ring-1 ring-white/10">
-              <Map lat={coords.lat} lon={coords.lon} address={address} />
+            <div className="card overflow-hidden p-1.5">
+              <div className="overflow-hidden rounded-[1.1rem]">
+                <Map lat={coords.lat} lon={coords.lon} address={address} />
+              </div>
             </div>
 
             {/* Address bar */}
-            {address && (
-              <div className="glass flex items-center gap-3 px-4 py-3">
-                <span className="text-slate-400 text-sm flex-1 truncate">📍 {address}</span>
+            {address ? (
+              <div className="card flex items-center gap-3 px-4 py-3.5">
+                <span className="text-base">📍</span>
+                <span className="flex-1 truncate text-sm font-medium" style={{ color: "var(--ink)" }}>{address}</span>
                 <button
                   onClick={handleSpeak}
                   title="Чети на глас"
-                  className={`flex-shrink-0 text-lg transition-all ${speaking ? "animate-pulse text-indigo-400" : "text-slate-500 hover:text-indigo-400"}`}
+                  className={`flex-shrink-0 text-xl transition-transform ${speaking ? "animate-pulse" : "hover:scale-110"}`}
                 >
                   🔊
                 </button>
               </div>
+            ) : (
+              <div className="card h-14 skeleton" />
             )}
 
-            {/* Claude content */}
-            <div className="glass p-5">
-              <MarkdownText text={content} />
-              {status === "loading" && (
-                <div className="mt-3 h-0.5 w-full shimmer rounded-full" />
+            {/* Claude guide */}
+            <div className="card p-6">
+              {content ? (
+                <MarkdownText text={content} />
+              ) : (
+                <div className="space-y-3">
+                  <div className="skeleton h-5 w-1/3" />
+                  <div className="skeleton h-4 w-full" />
+                  <div className="skeleton h-4 w-5/6" />
+                </div>
+              )}
+              {status === "loading" && content && (
+                <div className="mt-4 h-1 w-full shimmer rounded-full" />
               )}
             </div>
 
             {/* Actions when done */}
             {status === "done" && (
-              <div className="flex flex-wrap gap-2 justify-center pt-1 fade-in">
-                {/* Photo button */}
+              <div className="grid grid-cols-2 gap-2.5 fade-in">
                 <button
                   onClick={() => photoRef.current?.click()}
-                  className="glass text-slate-300 hover:text-white px-5 py-2 rounded-xl text-sm transition-all hover:border-indigo-500/50"
+                  className="btn-soft px-4 py-3 text-sm font-medium"
                 >
                   📸 Снимай мястото
                 </button>
@@ -408,17 +456,16 @@ export default function Home() {
                   className="hidden"
                   onChange={handlePhoto}
                 />
-                {/* Timeline button */}
                 <button
                   onClick={loadTimeline}
                   disabled={timelineLoading}
-                  className="glass text-slate-300 hover:text-white px-5 py-2 rounded-xl text-sm transition-all hover:border-indigo-500/50 disabled:opacity-50"
+                  className="btn-soft px-4 py-3 text-sm font-medium disabled:opacity-50"
                 >
-                  🕰️ Виж през историята
+                  🕰️ През историята
                 </button>
                 <button
                   onClick={reset}
-                  className="glass text-slate-400 hover:text-white px-5 py-2 rounded-xl text-sm transition-all"
+                  className="btn-soft col-span-2 px-4 py-3 text-sm font-medium"
                 >
                   🔄 Ново място
                 </button>
@@ -427,44 +474,48 @@ export default function Home() {
 
             {/* Timeline loading */}
             {timelineLoading && (
-              <div className="glass p-6 text-center fade-in">
-                <div className="text-3xl mb-3 animate-pulse">🕰️</div>
-                <p className="text-slate-400 text-sm">
-                  Claude избира исторически епохи и рисува как е изглеждало мястото...
+              <div className="card p-6 text-center fade-in">
+                <div className="mb-3 inline-block text-3xl floaty">🕰️</div>
+                <p className="text-sm" style={{ color: "var(--muted)" }}>
+                  Claude избира епохи и рисува как е изглеждало мястото…
                 </p>
-                <div className="mt-3 h-0.5 w-full shimmer rounded-full" />
+                <div className="mt-4 grid grid-cols-3 gap-2">
+                  <div className="skeleton aspect-square" />
+                  <div className="skeleton aspect-square" />
+                  <div className="skeleton aspect-square" />
+                </div>
               </div>
             )}
 
             {/* Timeline gallery */}
             {timeline.length > 0 && !timelineLoading && (
               <div className="space-y-4 fade-in">
-                <h3 className="text-center text-indigo-400 font-semibold text-sm">
+                <h3 className="text-center font-display text-lg font-bold" style={{ color: "var(--espresso)" }}>
                   🕰️ Мястото през историята
                 </h3>
                 {timeline.map((era, i) => (
-                  <div key={i} className="glass overflow-hidden">
+                  <div key={i} className="card overflow-hidden">
                     {era.image ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={`data:image/png;base64,${era.image}`}
                         alt={era.year}
-                        className="w-full aspect-square object-cover"
+                        className="aspect-square w-full object-cover"
                       />
                     ) : (
-                      <div className="w-full aspect-square flex items-center justify-center text-slate-600 text-sm bg-slate-800/50">
+                      <div className="flex aspect-square w-full items-center justify-center text-sm" style={{ color: "var(--muted)", background: "var(--cream-2)" }}>
                         🖼️ Изображението не успя да се генерира
                       </div>
                     )}
-                    <div className="p-4">
-                      <div className="inline-block bg-indigo-600/30 text-indigo-300 text-xs font-semibold px-2.5 py-1 rounded-lg mb-2">
+                    <div className="p-5">
+                      <span className="mb-2 inline-block rounded-lg px-2.5 py-1 text-xs font-semibold" style={{ background: "rgba(194,96,60,0.12)", color: "var(--terracotta-d)" }}>
                         {era.year}
-                      </div>
-                      <p className="text-slate-300 text-sm leading-relaxed">{era.caption}</p>
+                      </span>
+                      <p className="text-sm leading-relaxed" style={{ color: "var(--ink)" }}>{era.caption}</p>
                     </div>
                   </div>
                 ))}
-                <p className="text-center text-slate-600 text-xs">
+                <p className="text-center text-xs" style={{ color: "var(--muted)" }}>
                   ⚠️ AI художествени възстановки, не реални снимки
                 </p>
               </div>
@@ -472,15 +523,17 @@ export default function Home() {
 
             {/* Photo description */}
             {photoLoading && (
-              <div className="glass p-4 text-center fade-in">
-                <div className="text-2xl animate-spin mb-2">🔍</div>
-                <p className="text-slate-400 text-sm">Claude анализира снимката...</p>
+              <div className="card p-5 text-center fade-in">
+                <div className="mb-2 inline-block text-2xl animate-spin">🔍</div>
+                <p className="text-sm" style={{ color: "var(--muted)" }}>Claude разглежда снимката…</p>
               </div>
             )}
             {photoDesc && !photoLoading && (
-              <div className="glass p-4 fade-in">
-                <h3 className="text-indigo-400 font-semibold text-sm mb-2">📸 Claude вижда:</h3>
-                <p className="text-slate-300 text-sm leading-relaxed">{photoDesc}</p>
+              <div className="card p-5 fade-in">
+                <h3 className="mb-2 font-display text-base font-bold" style={{ color: "var(--terracotta-d)" }}>
+                  📸 Claude вижда
+                </h3>
+                <p className="text-sm leading-relaxed" style={{ color: "var(--ink)" }}>{photoDesc}</p>
               </div>
             )}
           </div>
@@ -488,18 +541,22 @@ export default function Home() {
 
         {/* ── ERROR ── */}
         {status === "error" && (
-          <div className="text-center space-y-4 fade-in">
-            <div className="glass border-red-900/50 p-6">
-              <div className="text-3xl mb-3">⚠️</div>
-              <p className="text-red-400 text-sm">{error}</p>
+          <div className="mt-10 space-y-4 text-center fade-in">
+            <div className="card p-7">
+              <div className="mb-3 text-3xl">⚠️</div>
+              <p className="text-sm" style={{ color: "var(--ink)" }}>{error}</p>
             </div>
-            <button
-              onClick={reset}
-              className="glass text-slate-400 hover:text-white px-6 py-2 rounded-xl text-sm transition-colors"
-            >
+            <button onClick={reset} className="btn-soft px-7 py-3 text-sm font-medium">
               Опитай отново
             </button>
           </div>
+        )}
+
+        {/* footer */}
+        {!busy && (
+          <p className="mt-12 text-center text-xs" style={{ color: "var(--muted)" }}>
+            Създадено с Claude · карти от OpenStreetMap
+          </p>
         )}
       </div>
     </div>
