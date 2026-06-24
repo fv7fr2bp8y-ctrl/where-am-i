@@ -33,8 +33,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Missing place" }, { status: 400 });
 
   const anthropicKey = getKey("ANTHROPIC_API_KEY");
-  const openaiKey = getKey("OPENAI_API_KEY");
-  if (!anthropicKey || !openaiKey)
+  const googleKey = getKey("GOOGLE_API_KEY") || getKey("GEMINI_API_KEY");
+  if (!anthropicKey || !googleKey)
     return NextResponse.json({ error: "Missing API keys" }, { status: 500 });
 
   // 1. Claude избира 3 ключови епохи + пише image prompt-ове
@@ -68,40 +68,45 @@ Respond ONLY with a JSON array of 3 objects, no other text. Example:
     return NextResponse.json({ error: "Failed to parse eras" }, { status: 500 });
   }
 
-  // 2. Генерираме изображение за всяка епоха паралелно
+  // 2. Генерираме изображение за всяка епоха през Google Gemini (Nano Banana)
   const images = await Promise.all(
-    eras.slice(0, 3).map(async (era) => {
-      try {
-        const res = await fetch("https://api.openai.com/v1/images/generations", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${openaiKey}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: "gpt-image-1",
-            prompt: era.prompt,
-            n: 1,
-            size: "1024x1024",
-            quality: "low", // по-бързо и евтино
-          }),
-        });
-        if (!res.ok) {
-          const err = await res.text();
-          console.error("gpt-image-1 error:", err);
-          return { ...era, image: null, error: "image_failed" };
-        }
-        const data = await res.json();
-        const b64 = data.data?.[0]?.b64_json ?? null;
-        return { year: era.year, caption: era.caption, image: b64 };
-      } catch (e) {
-        console.error("image gen exception:", e);
-        return { ...era, image: null, error: "exception" };
-      }
-    })
+    eras.slice(0, 3).map((era) => generateImage(era, googleKey))
   );
 
   return NextResponse.json({ eras: images });
+}
+
+const IMAGE_MODEL = "gemini-2.5-flash-image";
+
+async function geminiImageOnce(prompt: string, key: string): Promise<string | null> {
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${IMAGE_MODEL}:generateContent?key=${key}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { responseModalities: ["IMAGE"] },
+      }),
+    }
+  );
+  if (!res.ok) return null;
+  const json = await res.json();
+  const parts = json?.candidates?.[0]?.content?.parts ?? [];
+  const img = parts.find((p: { inlineData?: { data?: string } }) => p.inlineData?.data);
+  return img?.inlineData?.data ?? null;
+}
+
+async function generateImage(era: Era, key: string) {
+  try {
+    // Един повторен опит при празен отговор (free tier може да троттлне)
+    let b64 = await geminiImageOnce(era.prompt, key);
+    if (!b64) b64 = await geminiImageOnce(era.prompt, key);
+    return { year: era.year, caption: era.caption, image: b64 };
+  } catch (e) {
+    console.error("gemini image error:", e);
+    return { year: era.year, caption: era.caption, image: null };
+  }
 }
 
 export const maxDuration = 120;
