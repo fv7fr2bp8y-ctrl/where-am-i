@@ -414,8 +414,8 @@ export default function Home() {
                 { Icon: CameraIcon, label: "Снимка" },
                 { Icon: SpeakerIcon, label: "Глас" },
               ].map(({ Icon, label }) => (
-                <div key={label} className="tile flex flex-col items-center gap-3 px-2 py-6">
-                  <Icon className="h-10 w-10" style={{ color: "var(--blue)" }} />
+                <div key={label} className="tile flex flex-col items-center gap-3 px-2 py-7">
+                  <Icon className="h-14 w-14" style={{ color: "var(--blue)" }} />
                   <span className="text-xs font-semibold" style={{ color: "var(--slate)" }}>{label}</span>
                 </div>
               ))}
