@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { connection } from "next/server";
 import { readFileSync } from "fs";
 import { join } from "path";
+import { gridKey, getGuide, setGuide } from "../../lib/cache";
 
 // Заобикаля празния ANTHROPIC_API_KEY от Claude Code среда
 function getApiKey(): string {
@@ -65,6 +66,18 @@ export async function POST(req: NextRequest) {
   if (typeof lat !== "number" || typeof lon !== "number")
     return NextResponse.json({ error: "Invalid coordinates" }, { status: 400 });
 
+  const encoder = new TextEncoder();
+  const cacheKey = `guide:${lang}:${typeof topic === "string" ? topic : "full"}:${gridKey(lat, lon)}`;
+
+  // 1) Кеш хит — връщаме веднага, без геокодиране и без Claude
+  const cached = await getGuide(cacheKey);
+  if (cached) {
+    const body = `\x00${JSON.stringify({ address: cached.address })}\n${cached.content}`;
+    return new NextResponse(body, {
+      headers: { "Content-Type": "text/plain; charset=utf-8", "X-Cache": "HIT" },
+    });
+  }
+
   const apiKey = getApiKey();
   if (!apiKey)
     return NextResponse.json({ error: "Missing ANTHROPIC_API_KEY" }, { status: 500 });
@@ -107,19 +120,23 @@ ${topicInstruction ?? fullFormat}`;
     messages: [{ role: "user", content: userContent }],
   });
 
-  const encoder = new TextEncoder();
   const readable = new ReadableStream({
     async start(controller) {
       controller.enqueue(encoder.encode(`\x00${JSON.stringify({ address: shortAddress })}\n`));
+      let full = "";
       for await (const chunk of stream) {
-        if (chunk.type === "content_block_delta" && chunk.delta.type === "text_delta")
+        if (chunk.type === "content_block_delta" && chunk.delta.type === "text_delta") {
+          full += chunk.delta.text;
           controller.enqueue(encoder.encode(chunk.delta.text));
+        }
       }
       controller.close();
+      // Записваме в кеша (ако е конфигуриран) — не блокира отговора
+      setGuide(cacheKey, { address: shortAddress, content: full }).catch(() => {});
     },
   });
 
   return new NextResponse(readable, {
-    headers: { "Content-Type": "text/plain; charset=utf-8", "Transfer-Encoding": "chunked" },
+    headers: { "Content-Type": "text/plain; charset=utf-8", "Transfer-Encoding": "chunked", "X-Cache": "MISS" },
   });
 }

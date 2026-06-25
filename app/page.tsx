@@ -361,7 +361,7 @@ export default function Home() {
       const res = await fetch("/api/timeline", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ place: address, lang: lang.code }),
+        body: JSON.stringify({ place: address, lang: lang.code, lat: coords?.lat, lon: coords?.lon }),
       });
       const data = await res.json();
       setTimeline(data.eras ?? []);
@@ -645,7 +645,7 @@ export default function Home() {
                     {era.image ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
-                        src={`data:image/png;base64,${era.image}`}
+                        src={era.image.startsWith("http") ? era.image : `data:image/png;base64,${era.image}`}
                         alt={era.year}
                         className="aspect-square w-full object-cover"
                       />

@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { connection } from "next/server";
 import { readFileSync } from "fs";
 import { join } from "path";
+import { gridKey, getTimeline, setTimeline, uploadImage, blobEnabled } from "../../lib/cache";
 
 function getKey(name: string): string {
   const fromProcess = process.env[name];
@@ -28,9 +29,19 @@ const CAPTION_LANG: Record<string, string> = {
 export async function POST(req: NextRequest) {
   await connection();
 
-  const { place, lang = "bg" } = await req.json();
+  const { place, lang = "bg", lat, lon } = await req.json();
   if (!place || typeof place !== "string")
     return NextResponse.json({ error: "Missing place" }, { status: 400 });
+
+  // Кеш ключ по координати (ако са подадени)
+  const hasCoords = typeof lat === "number" && typeof lon === "number";
+  const cacheKey = hasCoords ? `timeline:${lang}:${gridKey(lat, lon)}` : null;
+
+  // 0) Кеш хит
+  if (cacheKey) {
+    const cached = await getTimeline(cacheKey);
+    if (cached) return NextResponse.json({ eras: cached, cache: "HIT" });
+  }
 
   const anthropicKey = getKey("ANTHROPIC_API_KEY");
   const googleKey = getKey("GOOGLE_API_KEY") || getKey("GEMINI_API_KEY");
@@ -73,7 +84,25 @@ Respond ONLY with a JSON array of 3 objects, no other text. Example:
     eras.slice(0, 3).map((era) => generateImage(era, googleKey))
   );
 
-  return NextResponse.json({ eras: images });
+  // 3. Качваме снимките в Blob и кешираме метаданните (само ако Blob е наличен)
+  if (cacheKey && blobEnabled()) {
+    const uploaded = await Promise.all(
+      images.map(async (e, i) => {
+        if (!e.image) return e;
+        const url = await uploadImage(`${cacheKey.replace(/:/g, "_")}_${i}.png`, e.image);
+        return { year: e.year, caption: e.caption, image: url ?? e.image };
+      })
+    );
+    // Кешираме само ако всички снимки са качени като URL-и (малки метаданни)
+    const allUrls = uploaded.every((e) => e.image && e.image.startsWith("http"));
+    if (allUrls) {
+      await setTimeline(cacheKey, uploaded);
+      return NextResponse.json({ eras: uploaded, cache: "MISS" });
+    }
+    return NextResponse.json({ eras: uploaded, cache: "SKIP" });
+  }
+
+  return NextResponse.json({ eras: images, cache: "OFF" });
 }
 
 const IMAGE_MODEL = "gemini-2.5-flash-image";
