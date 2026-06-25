@@ -6,7 +6,7 @@ import Splash from "./components/Splash";
 import {
   PinIcon, LandmarkIcon, FoodIcon, SparkleIcon, ClockIcon,
   CameraIcon, SpeakerIcon, GlobeIcon, CompassIcon, RefreshIcon,
-  WarningIcon, ChevronIcon, CheckIcon,
+  WarningIcon, ChevronIcon,
 } from "./components/Icons";
 import { UI, type LangCode } from "./i18n";
 
@@ -127,7 +127,6 @@ export default function Home() {
   const [address, setAddress] = useState("");
   const [speaking, setSpeaking] = useState(false);
   const [lang, setLang] = useState<Lang>(LANGS[0]);
-  const [langOpen, setLangOpen] = useState(false);
   const [history, setHistory] = useState<Visit[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [photoDesc, setPhotoDesc] = useState("");
@@ -259,7 +258,6 @@ export default function Home() {
   // Смяна на език — ако вече има резултат, презарежда разказа на новия език
   function changeLang(l: Lang) {
     setLang(l);
-    setLangOpen(false);
     if (coords && (status === "done" || status === "loading")) {
       setTimeline([]); // старите снимки/надписи са на другия език
       setPhotoDesc("");
@@ -343,41 +341,30 @@ export default function Home() {
           <img src="/generated/logo.png" alt="Where am I" className="logo-badge h-12 w-12 rounded-2xl shadow-md" />
         </header>
 
-        {/* ── Language dropdown ── */}
-        <div className="relative z-40 mt-5 fade-in">
-          <button
-            onClick={() => setLangOpen((o) => !o)}
-            className="card flex w-full items-center gap-3 px-4 py-3"
-          >
+        {/* ── Language selector (нативен select — надежден на всеки телефон) ── */}
+        <div className="relative mt-5 fade-in">
+          <div className="card flex items-center gap-3 px-4 py-3.5">
             <GlobeIcon className="h-5 w-5" style={{ color: "var(--blue)" }} />
-            <span className="flex-1 text-left text-sm font-semibold" style={{ color: "var(--ink)" }}>
+            <span className="flex-1 text-sm font-semibold" style={{ color: "var(--ink)" }}>
               <span className="mr-1.5">{lang.flag}</span>{lang.name}
             </span>
-            <ChevronIcon className={`h-5 w-5 transition-transform ${langOpen ? "rotate-180" : ""}`} style={{ color: "var(--muted)" }} />
-          </button>
-
-          {langOpen && (
-            <>
-              {/* клик извън менюто го затваря */}
-              <div className="fixed inset-0 z-20" onClick={() => setLangOpen(false)} />
-              <div className="card absolute left-0 right-0 top-full z-30 mt-2 overflow-hidden p-1.5 fade-in">
-                {LANGS.map((l) => (
-                  <button
-                    key={l.code}
-                    onClick={() => changeLang(l)}
-                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition-colors"
-                    style={lang.code === l.code
-                      ? { background: "var(--blue-soft)", color: "var(--blue-d)", fontWeight: 600 }
-                      : { color: "var(--slate)" }}
-                  >
-                    <span className="text-base">{l.flag}</span>
-                    <span className="flex-1">{l.name}</span>
-                    {lang.code === l.code && <CheckIcon className="h-4 w-4" style={{ color: "var(--blue)" }} />}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
+            <ChevronIcon className="h-5 w-5" style={{ color: "var(--muted)" }} />
+          </div>
+          <select
+            value={lang.code}
+            onChange={(e) => {
+              const next = LANGS.find((l) => l.code === e.target.value);
+              if (next) changeLang(next);
+            }}
+            aria-label={t.statLang}
+            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+          >
+            {LANGS.map((l) => (
+              <option key={l.code} value={l.code}>
+                {l.flag} {l.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* ── IDLE hero ── */}
