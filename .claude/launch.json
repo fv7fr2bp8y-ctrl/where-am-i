@@ -5,7 +5,8 @@
       "name": "where-am-i",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
-      "port": 3000
+      "port": 3001,
+      "autoPort": true
     }
   ]
 }

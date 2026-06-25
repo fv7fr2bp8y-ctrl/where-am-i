@@ -9,7 +9,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Where am I? · Твоят джобен пътеводител",
+  title: "Placetale · Историята на твоето място",
   description: "Открий историята, фактите и вкусовете на мястото, на което си.",
 };
 

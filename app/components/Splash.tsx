@@ -28,10 +28,10 @@ export default function Splash() {
         <div className="splash-logo-wrap">
           <span className="splash-ring" />
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/generated/logo.png" alt="Where am I" className="splash-logo" />
+          <img src="/generated/logo.png" alt="Placetale" className="splash-logo" />
         </div>
-        <h1 className="splash-title">Where am I?</h1>
-        <p className="splash-tag">Твоят джобен пътеводител</p>
+        <h1 className="splash-title">Placetale</h1>
+        <p className="splash-tag">Историята на твоето място</p>
         <div className="splash-dots">
           <span /><span /><span />
         </div>

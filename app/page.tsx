@@ -453,11 +453,11 @@ export default function Home() {
           <div>
             <p className="text-sm font-medium" style={{ color: "var(--muted)" }}>{t.subtitle}</p>
             <h1 className="text-2xl font-extrabold tracking-tight" style={{ color: "var(--ink)" }}>
-              Where am I?
+              Placetale
             </h1>
           </div>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/generated/logo.png" alt="Where am I" className="logo-badge h-12 w-12 rounded-2xl shadow-md" />
+          <img src="/generated/logo.png" alt="Placetale" className="logo-badge h-12 w-12 rounded-2xl shadow-md" />
         </header>
 
         {/* ── Language selector (нативен select — надежден на всеки телефон) ── */}

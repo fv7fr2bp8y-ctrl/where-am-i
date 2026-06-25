@@ -29,7 +29,7 @@ interface GeocodeResult {
 async function reverseGeocode(lat: number, lon: number, lang: string): Promise<{ full: string; short: string }> {
   const res = await fetch(
     `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=${lang}`,
-    { headers: { "User-Agent": "WhereAmI/1.0" } }
+    { headers: { "User-Agent": "Placetale/1.0" } }
   );
   const data: GeocodeResult = await res.json();
   const a = data.address ?? {};
