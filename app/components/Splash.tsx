@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { GlobeIcon, PinIcon } from "./Icons";
 
 export default function Splash() {
   const [hidden, setHidden] = useState(false);
@@ -29,8 +30,9 @@ export default function Splash() {
       <div className="splash-content">
         <div className="splash-logo-wrap">
           <span className="splash-ring" />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/generated/logo.png" alt="Placetale" className="splash-logo" />
+          <div className="splash-logo">
+            <PinIcon className="splash-logo-pin" />
+          </div>
         </div>
         <h1 className="splash-title">Placetale</h1>
         <p className="splash-tag">Историята на твоето място</p>
