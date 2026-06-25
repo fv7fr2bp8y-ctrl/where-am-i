@@ -19,8 +19,10 @@ export default function Splash() {
       className={`splash ${hidden ? "splash-hide" : ""}`}
       style={{
         backgroundImage: "url(/generated/splash.png)",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
+        backgroundSize: "auto 100%",
+        backgroundPosition: "center center",
+        backgroundRepeat: "no-repeat",
+        backgroundColor: "#2a47b8",
       }}
     >
       <div className="splash-overlay" />
