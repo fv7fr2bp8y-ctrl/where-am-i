@@ -39,7 +39,7 @@ export const UI: Record<LangCode, UIStrings> = {
   bg: {
     subtitle: "Накъде днес?",
     heroTitle: "Какво се крие около теб?",
-    heroSub: "История, интересни факти и къде да хапнеш — само с едно докосване.",
+    heroSub: "История, интересни факти и къде да хапнеш.",
     cta: "Открий къде съм",
     catHistory: "История", catFood: "Хранене", catFacts: "Факти",
     catEras: "Епохи", catPhoto: "Снимка", catVoice: "Глас",
