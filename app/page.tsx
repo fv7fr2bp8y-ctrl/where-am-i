@@ -182,11 +182,18 @@ export default function Home() {
   }
 
   const handleSpeak = useCallback(async () => {
-    if (!address) return;
+    // Чете показания текст (краткия отговор/разказа); ако няма — адреса
+    const clean = content
+      .replace(/[#*]/g, "")
+      .replace(/^[-•]\s*/gm, "")
+      .replace(/\p{Extended_Pictographic}/gu, "")
+      .trim();
+    const text = clean || address;
+    if (!text) return;
     setSpeaking(true);
-    await speakText(address, lang.tts);
+    await speakText(text, lang.tts);
     setSpeaking(false);
-  }, [address, lang]);
+  }, [content, address, lang]);
 
   // Изтегля разказа за дадени координати на конкретен език (споделено от explore, смяна на език и плочките)
   async function streamGuide(lat: number, lon: number, l: Lang, speak: boolean, topic?: string) {
