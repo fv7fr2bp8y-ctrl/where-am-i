@@ -16,6 +16,7 @@ type Status = "idle" | "locating" | "loading" | "done" | "error";
 interface Visit { id: string; date: string; address: string; lat: number; lon: number; }
 interface Lang  { code: string; flag: string; label: string; name: string; tts: string; }
 interface TimelineEra { year: string; caption: string; image: string | null; }
+interface GeoResult { lat: number; lon: number; name: string; full: string; }
 
 const LANGS: Lang[] = [
   { code: "bg", flag: "🇧🇬", label: "БГ", name: "Български", tts: "bg-BG" },
@@ -135,9 +136,13 @@ export default function Home() {
   const [timelineLoading, setTimelineLoading] = useState(false);
   const [activeTopic,     setActiveTopic]     = useState<string | null>(null);
   const [flippedCards,    setFlippedCards]    = useState<Set<number>>(new Set());
+  const [searchQuery,     setSearchQuery]     = useState("");
+  const [searchResults,   setSearchResults]   = useState<GeoResult[]>([]);
+  const [searchLoading,   setSearchLoading]   = useState(false);
 
-  const abortRef = useRef<AbortController | null>(null);
-  const photoRef = useRef<HTMLInputElement>(null);
+  const abortRef  = useRef<AbortController | null>(null);
+  const photoRef  = useRef<HTMLInputElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
   const t = UI[lang.code as LangCode];
   const busy = status === "locating" || status === "loading";
 
@@ -275,6 +280,24 @@ export default function Home() {
     setTimelineLoading(false);
   }
 
+  async function doSearch(q: string) {
+    if (!q.trim()) return;
+    setSearchLoading(true); setSearchResults([]);
+    try {
+      const res = await fetch(`/api/geocode?q=${encodeURIComponent(q)}&lang=${lang.code}`);
+      const data = await res.json();
+      setSearchResults(data.results ?? []);
+    } catch {}
+    setSearchLoading(false);
+  }
+
+  function pickPlace(r: GeoResult) {
+    setSearchQuery(""); setSearchResults([]);
+    setError(""); setAddress(""); setPhotoDesc(""); setTimeline([]); setActiveTopic(null); setFlippedCards(new Set());
+    setCoords({ lat: r.lat, lon: r.lon });
+    streamGuide(r.lat, r.lon, lang, false);
+  }
+
   function reset() {
     abortRef.current?.abort(); stopSpeaking();
     setStatus("idle"); setContent(""); setCoords(null); setAddress("");
@@ -323,6 +346,46 @@ export default function Home() {
       {/* ── IDLE ── */}
       {status === "idle" && (
         <div className="fade-in">
+          {/* Search bar */}
+          <div className="search-wrap">
+            <div className="search-bar">
+              <svg className="search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="8.5" cy="8.5" r="5.5"/><path d="M15 15l-3-3"/>
+              </svg>
+              <input
+                ref={searchRef}
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter") doSearch(searchQuery); }}
+                placeholder={lang.code === "bg" ? "Търси място..." : lang.code === "de" ? "Ort suchen..." : lang.code === "fr" ? "Chercher un lieu..." : lang.code === "es" ? "Buscar lugar..." : "Search place..."}
+                className="search-input"
+                type="search"
+                autoComplete="off"
+              />
+              {searchLoading
+                ? <span className="search-spinner" />
+                : searchQuery && (
+                  <button onClick={() => doSearch(searchQuery)} className="search-go">
+                    <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4"><path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd"/></svg>
+                  </button>
+                )
+              }
+            </div>
+            {searchResults.length > 0 && (
+              <div className="search-dropdown">
+                {searchResults.map((r, i) => (
+                  <button key={i} onClick={() => pickPlace(r)} className="search-result">
+                    <PinIcon className="h-4 w-4 flex-shrink-0" style={{ color: "var(--blue)" }} />
+                    <span className="min-w-0">
+                      <span className="block text-sm font-semibold truncate" style={{ color: "var(--ink)" }}>{r.name}</span>
+                      <span className="block text-xs truncate" style={{ color: "var(--muted)" }}>{r.full}</span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
           {/* Hero card */}
           <div className="hero-card">
             <div className="hero-pin-wrap">
