@@ -382,9 +382,8 @@ export default function Home() {
             <div className="hero-pin-wrap">
               <PinIcon className="h-7 w-7" style={{ color: "#fff" }} />
             </div>
-            <h1 className="hero-title">{t.heroTitle}</h1>
             <p className="hero-sub">{t.heroSub}</p>
-            <button onClick={explore} className="hero-btn">{t.cta}</button>
+            <button onClick={explore} className="hero-btn">{t.heroTitle}</button>
           </div>
 
           {/* Category grid */}
