@@ -308,32 +308,23 @@ export default function Home() {
   // ── Header (always visible) ──────────────────────────────────────────────
   const header = (
     <div className="app-header">
-      <div className="app-header-titles">
-        <span className="app-header-sup">
-          {status === "idle"     ? (lang.code === "bg" ? "Накъде днес?" : lang.code === "de" ? "Wohin heute?" : lang.code === "fr" ? "Où aujourd'hui ?" : lang.code === "es" ? "¿Adónde hoy?" : "Where today?")
-          : status === "locating" ? t.locating
-          : address || "Placetale"}
-        </span>
+      <div className="app-header-left">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/generated/logo.png" alt="Placetale" className="app-header-logo" />
         <span className="app-header-title">Placetale</span>
       </div>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <div className="app-logo-btn">
-        <img src="/generated/logo.png" alt="Placetale" style={{ width: 36, height: 36, borderRadius: 10 }} />
+      <div className="app-header-lang">
+        <span className="text-base">{lang.flag}</span>
+        <span className="text-sm font-semibold" style={{ color: "var(--slate)" }}>{lang.label}</span>
+        <ChevronIcon className="h-3 w-3" style={{ color: "var(--muted)" }} />
+        <select value={lang.code} onChange={e => { const l = LANGS.find(x => x.code === e.target.value); if (l) changeLang(l); }} aria-label="Език">
+          {LANGS.map(l => <option key={l.code} value={l.code}>{l.flag} {l.name}</option>)}
+        </select>
       </div>
     </div>
   );
 
-  // ── Language selector ────────────────────────────────────────────────────
-  const langSelector = (
-    <div className="lang-select-wrap">
-      <GlobeIcon className="h-5 w-5 flex-shrink-0" style={{ color: "var(--blue)" }} />
-      <span className="lang-select-label">{lang.flag} {lang.name}</span>
-      <ChevronIcon className="h-4 w-4 lang-select-chevron" />
-      <select value={lang.code} onChange={e => { const l = LANGS.find(x => x.code === e.target.value); if (l) changeLang(l); }} aria-label="Език">
-        {LANGS.map(l => <option key={l.code} value={l.code}>{l.flag} {l.name}</option>)}
-      </select>
-    </div>
-  );
+  const langSelector = null;
 
   // ── Render ───────────────────────────────────────────────────────────────
   return (
