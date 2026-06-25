@@ -49,9 +49,18 @@ const LANG_PROMPTS: Record<string, { name: string; prompt: string }> = {
   es: { name: "español",   prompt: "Escribe en español. Sé cálido e informativo, como un guía local." },
 };
 
+// Кратки фокусирани отговори за всяка плочка
+const TOPIC_PROMPTS: Record<string, string> = {
+  history: "Tell me ONLY a brief, interesting history of this area — 2 to 4 short sentences. No headings, no other topics, no bullet points.",
+  food: "Recommend ONLY where to eat nearby — exactly 3 short suggestions, each on its own line starting with \"- \". No headings, no intro.",
+  facts: "Give ONLY 3 surprising fun facts about this area — each on its own line starting with \"- \". No headings, no intro.",
+  eras: "Briefly describe how this exact area looked across 3 different historical eras — one short sentence per era, each on its own line starting with \"- \" and beginning with the era name. No headings.",
+  intro: "In 1 to 2 short warm sentences tell me where I am and what is special about this spot. No headings, no lists.",
+};
+
 export async function POST(req: NextRequest) {
   await connection();
-  const { lat, lon, lang = "bg" } = await req.json();
+  const { lat, lon, lang = "bg", topic } = await req.json();
 
   if (typeof lat !== "number" || typeof lon !== "number")
     return NextResponse.json({ error: "Invalid coordinates" }, { status: 400 });
@@ -64,16 +73,9 @@ export async function POST(req: NextRequest) {
   const { full: place, short: shortAddress } = await reverseGeocode(lat, lon, lang);
   const lp = LANG_PROMPTS[lang] ?? LANG_PROMPTS.bg;
 
-  const stream = await client.messages.stream({
-    model: "claude-sonnet-4-6",
-    max_tokens: 1024,
-    messages: [{
-      role: "user",
-      content: `I am at: ${place} (${lat.toFixed(5)}, ${lon.toFixed(5)}).
+  const topicInstruction = typeof topic === "string" ? TOPIC_PROMPTS[topic] : undefined;
 
-${lp.prompt}
-
-Use this exact structure, but TRANSLATE the section headings into the target language (keep the emoji and the "## " prefix):
+  const fullFormat = `Use this exact structure, but TRANSLATE the section headings into the target language (keep the emoji and the "## " prefix):
 
 ## 📍 [heading: "Where I am"]
 
@@ -91,8 +93,18 @@ Interesting history of the area (3-4 sentences).
 
 Recommend 3-4 types of restaurants or specific places suitable for this area.
 
-IMPORTANT: All text including the headings must be written in the target language.`,
-    }],
+IMPORTANT: All text including the headings must be written in the target language.`;
+
+  const userContent = `I am at: ${place} (${lat.toFixed(5)}, ${lon.toFixed(5)}).
+
+${lp.prompt}
+
+${topicInstruction ?? fullFormat}`;
+
+  const stream = await client.messages.stream({
+    model: "claude-sonnet-4-6",
+    max_tokens: topicInstruction ? 400 : 1024,
+    messages: [{ role: "user", content: userContent }],
   });
 
   const encoder = new TextEncoder();

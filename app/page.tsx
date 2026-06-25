@@ -8,7 +8,7 @@ import {
   CameraIcon, SpeakerIcon, GlobeIcon, CompassIcon, RefreshIcon,
   WarningIcon, ChevronIcon,
 } from "./components/Icons";
-import { UI, type LangCode } from "./i18n";
+import { UI, type LangCode, type UIStrings } from "./i18n";
 
 const Map = dynamic(() => import("./components/Map"), { ssr: false });
 
@@ -118,6 +118,20 @@ function MarkdownText({ text }: { text: string }) {
   );
 }
 
+// Заглавия и икони за тематичните плочки
+const TOPIC_TITLE: Record<string, (t: UIStrings) => string> = {
+  history: (t) => t.catHistory,
+  food: (t) => t.catFood,
+  facts: (t) => t.catFacts,
+  eras: (t) => t.catEras,
+};
+const TOPIC_ICON: Record<string, (p: { className?: string; style?: React.CSSProperties }) => React.ReactElement> = {
+  history: LandmarkIcon,
+  food: FoodIcon,
+  facts: SparkleIcon,
+  eras: ClockIcon,
+};
+
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function Home() {
   const [status, setStatus] = useState<Status>("idle");
@@ -133,6 +147,7 @@ export default function Home() {
   const [photoLoading, setPhotoLoading] = useState(false);
   const [timeline, setTimeline] = useState<TimelineEra[]>([]);
   const [timelineLoading, setTimelineLoading] = useState(false);
+  const [activeTopic, setActiveTopic] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const photoRef = useRef<HTMLInputElement>(null);
 
@@ -173,8 +188,8 @@ export default function Home() {
     setSpeaking(false);
   }, [address, lang]);
 
-  // Изтегля разказа за дадени координати на конкретен език (споделено от explore и смяна на език)
-  async function streamGuide(lat: number, lon: number, l: Lang, speak: boolean) {
+  // Изтегля разказа за дадени координати на конкретен език (споделено от explore, смяна на език и плочките)
+  async function streamGuide(lat: number, lon: number, l: Lang, speak: boolean, topic?: string) {
     setContent("");
     setStatus("loading");
     abortRef.current?.abort();
@@ -184,7 +199,7 @@ export default function Home() {
       const res = await fetch("/api/explore", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lat, lon, lang: l.code }),
+        body: JSON.stringify({ lat, lon, lang: l.code, topic }),
         signal: abortRef.current.signal,
       });
       if (!res.ok) throw new Error("API error");
@@ -194,6 +209,7 @@ export default function Home() {
       let headerParsed = false;
       let buffer = "";
       let parsedAddress = "";
+      let fullContent = "";
 
       while (true) {
         const { done, value } = await reader.read();
@@ -210,21 +226,27 @@ export default function Home() {
                 const meta = JSON.parse(buffer.slice(nullIdx + 1, newlineIdx));
                 parsedAddress = meta.address ?? "";
                 setAddress(parsedAddress);
-                if (speak) setTimeout(() => speakText(parsedAddress, l.tts), 300);
+                // При пълен разказ четем адреса; при тематичен — ще прочетем съдържанието накрая
+                if (speak && !topic) setTimeout(() => speakText(parsedAddress, l.tts), 300);
               } catch { /* ignore */ }
               const rest = buffer.slice(newlineIdx + 1);
-              if (rest) setContent(rest);
+              if (rest) { setContent(rest); fullContent += rest; }
               headerParsed = true;
               buffer = "";
             }
           }
         } else {
+          fullContent += chunk;
           setContent((prev) => prev + chunk);
         }
       }
 
       setStatus("done");
       if (parsedAddress) saveVisit(parsedAddress, lat, lon);
+      // Глас за тематичните отговори — чете самото съдържание
+      if (speak && topic && fullContent.trim()) {
+        speakText(fullContent.replace(/^- /gm, "").trim(), l.tts);
+      }
     } catch (e: unknown) {
       if (e instanceof Error && e.name === "AbortError") return;
       setError(t.errGeneric);
@@ -238,6 +260,7 @@ export default function Home() {
     setCoords(null);
     setPhotoDesc("");
     setTimeline([]);
+    setActiveTopic(null);
     setStatus("locating");
 
     navigator.geolocation.getCurrentPosition(
@@ -255,13 +278,45 @@ export default function Home() {
     );
   }
 
-  // Смяна на език — ако вече има резултат, презарежда разказа на новия език
+  // Плочките — кратък фокусиран отговор за избрана тема
+  function runCategory(cat: string) {
+    setError("");
+    setAddress("");
+    setCoords(null);
+    setPhotoDesc("");
+    setTimeline([]);
+    setActiveTopic(cat);
+    setStatus("locating");
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+        setCoords({ lat, lon });
+        if (cat === "voice") {
+          streamGuide(lat, lon, lang, true, "intro");
+        } else if (cat === "photo") {
+          // показваме картата/адреса, после отваряме камерата
+          streamGuide(lat, lon, lang, false, "intro").then(() => photoRef.current?.click());
+        } else {
+          streamGuide(lat, lon, lang, false, cat); // history / food / facts / eras
+        }
+      },
+      () => {
+        setError(t.errGeo);
+        setStatus("error");
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }
+
+  // Смяна на език — ако вече има резултат, презарежда на новия език (същата тема)
   function changeLang(l: Lang) {
     setLang(l);
     if (coords && (status === "done" || status === "loading")) {
       setTimeline([]); // старите снимки/надписи са на другия език
-      setPhotoDesc("");
-      streamGuide(coords.lat, coords.lon, l, true);
+      const topic = activeTopic && activeTopic !== "photo" ? activeTopic : undefined;
+      streamGuide(coords.lat, coords.lon, l, false, topic);
     }
   }
 
@@ -320,6 +375,7 @@ export default function Home() {
     setPhotoDesc("");
     setTimeline([]);
     setTimelineLoading(false);
+    setActiveTopic(null);
   }
 
   const busy = status === "locating" || status === "loading";
@@ -397,17 +453,21 @@ export default function Home() {
             {/* Category tiles */}
             <div className="mt-5 grid grid-cols-3 gap-3">
               {[
-                { Icon: LandmarkIcon, label: t.catHistory },
-                { Icon: FoodIcon, label: t.catFood },
-                { Icon: SparkleIcon, label: t.catFacts },
-                { Icon: ClockIcon, label: t.catEras },
-                { Icon: CameraIcon, label: t.catPhoto },
-                { Icon: SpeakerIcon, label: t.catVoice },
-              ].map(({ Icon, label }) => (
-                <div key={label} className="tile flex flex-col items-center gap-3 px-2 py-7">
+                { Icon: LandmarkIcon, label: t.catHistory, cat: "history" },
+                { Icon: FoodIcon, label: t.catFood, cat: "food" },
+                { Icon: SparkleIcon, label: t.catFacts, cat: "facts" },
+                { Icon: ClockIcon, label: t.catEras, cat: "eras" },
+                { Icon: CameraIcon, label: t.catPhoto, cat: "photo" },
+                { Icon: SpeakerIcon, label: t.catVoice, cat: "voice" },
+              ].map(({ Icon, label, cat }) => (
+                <button
+                  key={label}
+                  onClick={() => runCategory(cat)}
+                  className="tile flex flex-col items-center gap-3 px-2 py-7"
+                >
                   <Icon className="h-14 w-14" style={{ color: "var(--blue)" }} />
                   <span className="text-sm font-semibold" style={{ color: "var(--slate)" }}>{label}</span>
-                </div>
+                </button>
               ))}
             </div>
 
@@ -513,6 +573,12 @@ export default function Home() {
 
             {/* Claude guide */}
             <div className="card p-6">
+              {activeTopic && TOPIC_TITLE[activeTopic] && (
+                <h3 className="mb-3 flex items-center gap-2 text-lg font-bold" style={{ color: "var(--ink)" }}>
+                  {(() => { const I = TOPIC_ICON[activeTopic]; return I ? <I className="h-5 w-5" style={{ color: "var(--blue)" }} /> : null; })()}
+                  {TOPIC_TITLE[activeTopic](t)}
+                </h3>
+              )}
               {content ? (
                 <MarkdownText text={content} />
               ) : (
