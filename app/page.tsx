@@ -46,15 +46,49 @@ const LANGS: Lang[] = [
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-let currentAudio: HTMLAudioElement | null = null;
+// Празен WAV — за „отключване" на звука при първото докосване (mobile autoplay)
+const SILENT_WAV =
+  "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=";
 
-function stopSpeaking() {
-  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+// Един преизползван аудио елемент. Веднъж отключен с жест, свири и програмно.
+let audioEl: HTMLAudioElement | null = null;
+let lastUrl: string | null = null;
+function ensureAudio(): HTMLAudioElement | null {
+  if (typeof window === "undefined") return null;
+  if (!audioEl) audioEl = new Audio();
+  return audioEl;
+}
+function unlockAudio() {
+  const a = ensureAudio();
+  if (!a) return;
+  try {
+    a.src = SILENT_WAV;
+    a.play().then(() => { a.pause(); a.currentTime = 0; }).catch(() => {});
+  } catch { /* ignore */ }
 }
 
-// Само висококачественият Gemini глас. Без роботски браузърен резерв.
-// Връща true при успех, false ако гласът не е наличен (напр. временно зает).
-async function speakText(text: string, _ttsLang: string): Promise<boolean> {
+function stopSpeaking() {
+  if (audioEl) { audioEl.pause(); }
+  if (lastUrl) { URL.revokeObjectURL(lastUrl); lastUrl = null; }
+  if (typeof window !== "undefined" && "speechSynthesis" in window)
+    window.speechSynthesis.cancel();
+}
+
+// Резервен браузърен глас — само когато Gemini е недостъпен (за да има винаги звук)
+function browserSpeak(text: string, ttsLang: string) {
+  if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  const v = window.speechSynthesis.getVoices().find((x) => x.lang.startsWith(ttsLang.slice(0, 2)));
+  if (v) u.voice = v;
+  u.lang = ttsLang;
+  u.rate = 0.97;
+  window.speechSynthesis.speak(u);
+}
+
+// Първо Gemini (висококачествен). При претоварване → браузърен резерв.
+async function speakText(text: string, ttsLang: string): Promise<boolean> {
+  const a = ensureAudio();
   stopSpeaking();
   try {
     const res = await fetch("/api/tts", {
@@ -62,16 +96,20 @@ async function speakText(text: string, _ttsLang: string): Promise<boolean> {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text }),
     });
-    if (!res.ok) return false;
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    currentAudio = new Audio(url);
-    currentAudio.onended = () => URL.revokeObjectURL(url);
-    await currentAudio.play();
-    return true;
-  } catch {
-    return false;
-  }
+    if (res.ok && a) {
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      lastUrl = url;
+      a.src = url;
+      a.onended = () => { if (lastUrl === url) { URL.revokeObjectURL(url); lastUrl = null; } };
+      await a.play();
+      return true;
+    }
+  } catch { /* пада към браузърния глас */ }
+
+  // Gemini недостъпен (rate-limit) → поне браузърен глас
+  browserSpeak(text, ttsLang);
+  return false;
 }
 
 // Рендира **удебелен** текст в рамките на ред
@@ -159,6 +197,24 @@ export default function Home() {
       const stored = localStorage.getItem("wai-history");
       if (stored) setHistory(JSON.parse(stored));
     } catch { /* ignore */ }
+  }, []);
+
+  // Отключваме звука при първото докосване (иначе мобилните блокират autoplay)
+  useEffect(() => {
+    const unlock = () => {
+      unlockAudio();
+      window.removeEventListener("pointerdown", unlock);
+      window.removeEventListener("touchend", unlock);
+      window.removeEventListener("click", unlock);
+    };
+    window.addEventListener("pointerdown", unlock, { once: true });
+    window.addEventListener("touchend", unlock, { once: true });
+    window.addEventListener("click", unlock, { once: true });
+    return () => {
+      window.removeEventListener("pointerdown", unlock);
+      window.removeEventListener("touchend", unlock);
+      window.removeEventListener("click", unlock);
+    };
   }, []);
 
   function saveVisit(addr: string, lat: number, lon: number) {
