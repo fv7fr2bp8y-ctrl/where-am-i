@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
-/* ── Palette ─────────────────────────────────────────────────────────────── */
+/* ── Tourista-style blue travel palette ──────────────────────────────────── */
 :root {
-  --bg:        #f0f4fb;
+  --bg:        #eef3fb;
   --bg-2:      #e4ecf8;
   --card:      #ffffff;
   --blue:      #2f6bff;
@@ -12,259 +12,164 @@
   --slate:     #44506a;
   --muted:     #8893a7;
   --line:      #e7edf6;
+  --star:      #f6a609;
   --font-body: var(--font-inter), system-ui, sans-serif;
 }
 
-* { font-family: var(--font-body); -webkit-tap-highlight-color: transparent; }
+* {
+  font-family: var(--font-body);
+  -webkit-tap-highlight-color: transparent;
+}
+
 html, body { background: var(--bg); color: var(--ink); }
 
-/* ── Screen shell: flex column, full height ──────────────────────────────── */
-.screen {
-  display: flex;
-  flex-direction: column;
-  height: 100dvh;
-  overflow: hidden;
-}
-
-/* ── Map section (top ~42%) ──────────────────────────────────────────────── */
-.map-section {
-  flex: 0 0 42dvh;
+/* ── App background ──────────────────────────────────────────────────────── */
+.bg-app {
   position: relative;
-  overflow: hidden;
-  background: var(--bg-2);
+  min-height: 100dvh;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(47,107,255,0.10) 0%, transparent 38%),
+    linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+  background-attachment: fixed;
 }
-.map-section .leaflet-container {
-  width: 100%; height: 100%;
-  border-radius: 0 !important;
-  font-family: var(--font-body);
-}
-.map-section .leaflet-control-attribution { font-size: 9px; opacity: 0.4; }
-.map-section .leaflet-popup-content-wrapper { border-radius: 0.9rem; }
-.map-section .leaflet-popup-content { font-size: 0.8rem; color: var(--ink); }
-
-/* Top bar overlay on map */
-.map-bar {
-  position: absolute; top: 0; left: 0; right: 0; z-index: 10;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: max(env(safe-area-inset-top, 0px), 10px) 1rem 10px;
-  background: rgba(255,255,255,0.72);
-  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(255,255,255,0.5);
-}
-
-/* ── Content section (bottom, scrollable) ────────────────────────────────── */
-.content-section {
-  flex: 1;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  background: var(--bg);
-  padding: 1rem 1rem max(env(safe-area-inset-bottom, 0px), 1rem);
-}
-
-/* ── Language pill ───────────────────────────────────────────────────────── */
-.lang-pill {
-  display: flex; align-items: center; gap: 5px;
-  padding: 6px 11px; border-radius: 999px;
-  border: 1.5px solid var(--line);
-  background: rgba(255,255,255,0.9);
-  cursor: pointer;
-}
-
-/* ── Hero CTA ────────────────────────────────────────────────────────────── */
-.cta-pill {
-  display: block; width: 100%;
-  background: linear-gradient(135deg, var(--blue), var(--blue-d));
-  color: #fff; border-radius: 1rem;
-  padding: 1rem; font-size: 1rem; font-weight: 700; text-align: center;
-  box-shadow: 0 14px 32px -10px rgba(47,107,255,0.55);
-  transition: transform .15s ease, filter .15s ease;
-}
-.cta-pill:active { transform: scale(0.97); }
-
-/* ── Buttons ─────────────────────────────────────────────────────────────── */
-.btn-primary {
-  background: linear-gradient(135deg, var(--blue), var(--blue-d));
-  color: #fff; border-radius: 0.875rem; font-weight: 700;
-  box-shadow: 0 10px 24px -10px rgba(47,107,255,0.55);
-  transition: transform .15s ease;
-}
-.btn-primary:active { transform: scale(0.97); }
-
-.btn-soft {
-  background: var(--blue-soft); color: var(--blue-d);
-  border-radius: 0.875rem; font-weight: 600;
-  transition: all .15s ease;
-}
-.btn-soft:active { transform: scale(0.97); }
-.btn-soft:disabled { opacity: 0.45; }
 
 /* ── Cards ───────────────────────────────────────────────────────────────── */
 .card {
-  background: var(--card); border-radius: 1.25rem;
-  box-shadow: 0 4px 20px -8px rgba(22,32,58,0.14), 0 1px 4px -1px rgba(22,32,58,0.06);
+  background: var(--card);
+  border-radius: 1.5rem;
+  box-shadow: 0 10px 30px -14px rgba(22,32,58,0.18), 0 2px 6px -2px rgba(22,32,58,0.06);
+}
+.card-flat {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 1.25rem;
 }
 
-/* ── Address bar ─────────────────────────────────────────────────────────── */
-.address-bar {
-  display: flex; align-items: flex-start; gap: 0.5rem;
+/* ── Buttons ─────────────────────────────────────────────────────────────── */
+.btn-primary {
+  background: linear-gradient(135deg, var(--blue) 0%, var(--blue-d) 100%);
+  color: #fff;
+  border-radius: 1rem;
+  box-shadow: 0 12px 26px -10px rgba(47,107,255,0.65);
+  transition: transform .15s ease, filter .15s ease;
 }
-.speak-btn {
-  flex-shrink: 0; width: 34px; height: 34px;
-  display: flex; align-items: center; justify-content: center;
-  border-radius: 0.875rem;
-  background: var(--blue-soft); color: var(--blue);
+.btn-primary:hover { filter: brightness(1.05); }
+.btn-primary:active { transform: scale(0.97); }
+
+.btn-soft {
+  background: var(--blue-soft);
+  color: var(--blue-d);
+  border-radius: 1rem;
+  font-weight: 600;
   transition: all .15s ease;
 }
-.speak-btn:active { transform: scale(0.9); }
-.speak-btn.speaking { animation: pulse-opacity 1.2s ease infinite; }
+.btn-soft:hover { background: #dfe9ff; }
+.btn-soft:active { transform: scale(0.97); }
 
-/* ── Category chips ──────────────────────────────────────────────────────── */
-.chips-row {
-  display: flex; gap: 0.5rem; overflow-x: auto;
-  padding: 0.25rem 0; scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
-}
-.chips-row::-webkit-scrollbar { display: none; }
-
-.cat-chip {
-  flex: 0 0 auto;
-  display: flex; align-items: center; gap: 0.35rem;
-  padding: 0.5rem 0.875rem; border-radius: 999px;
-  border: 1.5px solid var(--line);
-  background: var(--card); color: var(--slate);
-  font-size: 0.8125rem; font-weight: 600; white-space: nowrap;
+.btn-ghost {
+  background: #fff;
+  border: 1px solid var(--line);
+  color: var(--slate);
+  border-radius: 1rem;
   transition: all .15s ease;
 }
-.cat-chip:active { transform: scale(0.93); }
-.cat-chip-active {
-  background: var(--blue) !important; color: #fff !important;
+.btn-ghost:hover { border-color: var(--blue); color: var(--blue-d); }
+.btn-ghost:active { transform: scale(0.97); }
+
+/* ── Chips (language) ────────────────────────────────────────────────────── */
+.chip {
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--muted);
+  border-radius: 999px;
+  transition: all .15s ease;
+}
+.chip:active { transform: scale(0.94); }
+.chip-active {
+  background: var(--blue);
+  color: #fff;
   border-color: transparent;
-  box-shadow: 0 4px 14px -4px rgba(47,107,255,0.65);
+  box-shadow: 0 8px 18px -8px rgba(47,107,255,0.7);
 }
-.cat-chip:disabled { opacity: 0.4; pointer-events: none; }
 
-/* ── Stat row ────────────────────────────────────────────────────────────── */
-.stat-row {
-  display: flex; border-radius: 0.875rem; border: 1px solid var(--line);
-  overflow: hidden;
+/* ── Category tile ───────────────────────────────────────────────────────── */
+.tile {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 1.25rem;
+  transition: all .15s ease;
 }
+.tile:active { transform: scale(0.96); }
+
+.tile-icon {
+  width: 58px; height: 58px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 1.1rem;
+  background: linear-gradient(135deg, var(--blue-soft) 0%, #dbe7ff 100%);
+  box-shadow: inset 0 0 0 1px rgba(47,107,255,0.10);
+}
+
+/* ── Stat chip ───────────────────────────────────────────────────────────── */
 .stat {
-  flex: 1; display: flex; flex-direction: column; align-items: center;
-  gap: 2px; padding: 0.625rem 0.5rem;
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 0.75rem 0.5rem;
 }
 .stat + .stat { border-left: 1px solid var(--line); }
 
-/* ── Guide heading ───────────────────────────────────────────────────────── */
+/* ── Section heading inside guide ────────────────────────────────────────── */
 .guide-h { color: var(--ink); font-weight: 700; }
-
-/* ── Horizontal timeline + flip cards ───────────────────────────────────── */
-.timeline-h-scroll {
-  display: flex; gap: 0.75rem; overflow-x: auto;
-  padding: 0.5rem 0 0.75rem; scrollbar-width: none;
-  scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
-}
-.timeline-h-scroll::-webkit-scrollbar { display: none; }
-
-.era-card {
-  flex: 0 0 200px; height: 260px;
-  perspective: 1200px; cursor: pointer;
-  scroll-snap-align: center;
-}
-.era-card-inner {
-  width: 100%; height: 100%; position: relative;
-  transform-style: preserve-3d;
-  transition: transform 0.55s cubic-bezier(0.22,1,0.36,1);
-  border-radius: 1.25rem;
-}
-.era-card-inner.flipped { transform: rotateY(180deg); }
-
-.era-face {
-  position: absolute; inset: 0;
-  border-radius: 1.25rem; backface-visibility: hidden; overflow: hidden;
-}
-.era-front { background: var(--bg-2); }
-.era-back {
-  transform: rotateY(180deg);
-  background: linear-gradient(145deg, var(--blue), var(--blue-d));
-  color: #fff; display: flex; flex-direction: column;
-  justify-content: center; padding: 1.25rem;
-}
-.era-year-chip {
-  position: absolute; bottom: 9px; left: 9px;
-  background: rgba(16,24,48,0.65); color: #fff;
-  font-size: 0.7rem; font-weight: 700; border-radius: 999px;
-  padding: 3px 9px; backdrop-filter: blur(6px);
-}
-.era-flip-hint {
-  position: absolute; top: 8px; right: 8px;
-  background: rgba(255,255,255,0.22); color: rgba(255,255,255,0.9);
-  font-size: 0.62rem; font-weight: 600; border-radius: 999px;
-  padding: 2px 8px;
-}
-.era-year-back {
-  font-size: 0.72rem; font-weight: 800; opacity: 0.8;
-  margin-bottom: 0.625rem; text-transform: uppercase; letter-spacing: 0.06em;
-}
-.era-caption { font-size: 0.875rem; line-height: 1.55; opacity: 0.95; }
-.era-card-skeleton { flex: 0 0 200px; height: 260px; border-radius: 1.25rem; }
 
 /* ── Animations ──────────────────────────────────────────────────────────── */
 @keyframes ping-slow {
-  0%   { transform: scale(1);    opacity: .5; }
-  70%  { transform: scale(1.65); opacity: 0;  }
-  100% { transform: scale(1.65); opacity: 0;  }
+  0%   { transform: scale(1);   opacity: .5; }
+  70%  { transform: scale(1.5); opacity: 0; }
+  100% { transform: scale(1.5); opacity: 0; }
 }
+.ping-slow { animation: ping-slow 2.2s cubic-bezier(0,0,0.2,1) infinite; }
 
-.pin-pulse {
-  width: 22px; height: 22px; border-radius: 50%;
-  background: rgba(47,107,255,0.42);
-  animation: ping-slow 2.2s ease-out infinite;
-}
-.pin-pulse-fast {
-  background: rgba(47,107,255,0.52);
-  animation: ping-slow 0.9s cubic-bezier(0,0,0.2,1) infinite;
-}
-.pin-dot {
-  width: 22px; height: 22px;
-  background: var(--blue); border: 3px solid #fff;
-  border-radius: 50% 50% 50% 0; transform: rotate(-45deg);
-  box-shadow: 0 4px 10px rgba(47,107,255,0.5);
-}
-
-@keyframes shimmer {
-  0%   { background-position: -200% 0; }
-  100% { background-position:  200% 0; }
-}
+@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
 .shimmer {
-  background: linear-gradient(90deg, transparent 20%, rgba(47,107,255,0.2) 50%, transparent 80%);
-  background-size: 200% 100%; animation: shimmer 1.4s infinite;
+  background: linear-gradient(90deg, transparent 20%, rgba(47,107,255,0.22) 50%, transparent 80%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
 }
 
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(12px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-.fade-in { animation: fadeUp .4s cubic-bezier(0.22,1,0.36,1) both; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+.fade-in { animation: fadeUp .45s cubic-bezier(0.22,1,0.36,1) both; }
 
-@keyframes floaty {
-  0%,100% { transform: translateY(0); }
-  50%     { transform: translateY(-6px); }
-}
+@keyframes floaty { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
 .floaty { animation: floaty 3s ease-in-out infinite; }
 
 .skeleton {
-  background: linear-gradient(90deg,
-    rgba(231,237,246,0.6) 25%, rgba(231,237,246,1) 37%, rgba(231,237,246,0.6) 63%);
+  background: linear-gradient(90deg, rgba(231,237,246,0.6) 25%, rgba(231,237,246,1) 37%, rgba(231,237,246,0.6) 63%);
   background-size: 400% 100%;
-  animation: shimmer 1.4s ease infinite; border-radius: 0.75rem;
+  animation: shimmer 1.4s ease infinite;
+  border-radius: 0.75rem;
 }
 
-@keyframes pulse-opacity {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.45; }
+/* ── Leaflet ─────────────────────────────────────────────────────────────── */
+.leaflet-container { border-radius: 1.25rem; font-family: var(--font-body); }
+.leaflet-popup-content-wrapper { border-radius: 0.9rem; }
+.leaflet-popup-content { font-size: 0.8rem; color: var(--ink); }
+.leaflet-control-attribution { font-size: 9px; opacity: 0.55; }
+
+.pin-dot {
+  width: 22px; height: 22px;
+  background: var(--blue);
+  border: 3px solid #fff;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  box-shadow: 0 4px 10px rgba(47,107,255,0.5);
+}
+.pin-pulse {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: rgba(47,107,255,0.45);
+  animation: ping-slow 2s ease-out infinite;
 }
 
-/* ── Splash ──────────────────────────────────────────────────────────────── */
+/* ── Splash screen ───────────────────────────────────────────────────────── */
 .splash {
   position: fixed; inset: 0; z-index: 50;
   display: flex; align-items: center; justify-content: center;
@@ -304,19 +209,21 @@ html, body { background: var(--bg); color: var(--ink); }
   animation: dotBounce 1.2s ease-in-out infinite;
 }
 .splash-dots span:nth-child(2) { animation-delay: .15s; }
-.splash-dots span:nth-child(3) { animation-delay: .30s; }
+.splash-dots span:nth-child(3) { animation-delay: .3s; }
 
 @keyframes logoPop {
-  0%   { transform: scale(0.5); opacity: 0; }
-  60%  { transform: scale(1.08); }
+  0% { transform: scale(0.5); opacity: 0; }
+  60% { transform: scale(1.08); }
   100% { transform: scale(1); opacity: 1; }
 }
 @keyframes ringPulse {
-  0%   { transform: scale(1); opacity: .7; }
+  0% { transform: scale(1); opacity: .7; }
   100% { transform: scale(1.35); opacity: 0; }
 }
 @keyframes dotBounce {
   0%, 100% { transform: translateY(0); opacity: .5; }
-  50%       { transform: translateY(-7px); opacity: 1; }
+  50% { transform: translateY(-7px); opacity: 1; }
 }
+
+/* logo pop for header */
 .logo-badge { animation: logoPop .7s cubic-bezier(0.22,1,0.36,1) both; }
