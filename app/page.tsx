@@ -390,7 +390,7 @@ export default function Home() {
           <div className="cat-grid">
             {CATS.map(({ cat, Icon, label }) => (
               <button key={cat} onClick={() => runCategory(cat)} className="cat-grid-item">
-                <Icon className="h-8 w-8" style={{ color: "var(--blue)" }} />
+                <Icon className="h-12 w-12" style={{ color: "var(--blue)" }} />
                 <span className="cat-grid-label">{label(t)}</span>
               </button>
             ))}
