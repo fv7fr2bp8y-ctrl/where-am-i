@@ -11,6 +11,19 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Placetale · Историята на твоето място",
   description: "Открий историята, фактите и вкусовете на мястото, на което си.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Placetale",
+  },
+  icons: {
+    apple: "/icon-180.png",
+    icon: [
+      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
+  },
 };
 
 export const viewport: Viewport = {
